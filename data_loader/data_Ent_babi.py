@@ -26,7 +26,8 @@ def getEntityList(type_dict):
     return entityList
 
 def read_file(file_train, type_dict, entityList):
-    context_arr = []
+    ent_word = set()  #统计response的单词
+    context_arr,data = [],[]
     with open(file_train,'r') as f:
         for line in f.readlines():
             line = line.strip('\n')
@@ -39,6 +40,7 @@ def read_file(file_train, type_dict, entityList):
                 #计算local pointer的标准值
                 local_ptr = []
                 for key in response.split(' '):
+                    ent_word.add(key)
                     if key in entityList:
                         for i in range(len(context_arr), -1):
                             if context_arr[i][0] == key:
@@ -46,7 +48,41 @@ def read_file(file_train, type_dict, entityList):
                                 break
                     else:
                         local_ptr.append(len(context_arr))
+                #计算全局指针，统计上下文有没有在当前回答中出现
+                global_ptr =[1 if triplet[0] in response.split() else 0 for triplet in context_arr]
+                sketch_response = generate_sketch_response(response,entityList,type_dict)
 
+                gen_r = generate_memory(response, '$r', turn_id)
+                context_arr += gen_r #将当前回答加入上下文
+                data_details = {
+                    'context_arr':context_arr +[['$$$']*MEM_TOKEN_SIZE], #为什么后面要追加NULL表示符号？
+                    'response':response,
+                    "local_ptr":local_ptr,
+                    'global_ptr':global_ptr,
+                    'sketch_response':sketch_response
+                }
+                data.append(data_details)
+            else: #表示这段话结束
+                context_arr = []
+
+    return data
+
+
+def generate_sketch_response(response,global_entity,type_dict):
+    #对回答的每个单词生成@type的描述
+    sketch_response = []
+    for word in response:
+        if word in global_entity:
+            entity_type = None
+            for key in type_dict.keys():
+                if word in type_dict[key]:
+                    entity_type = key
+                    break
+            sketch_response.append('@'+entity_type)
+        else:
+            sketch_response.append(word)
+    sketch_response = " ".join(sketch_response)
+    return sketch_response
 
 def generate_memory(tokens,speaker,turn_id):
     tokens = tokens.split(' ')
