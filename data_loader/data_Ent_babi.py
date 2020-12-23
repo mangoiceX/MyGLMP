@@ -1,4 +1,5 @@
 from utils.config import *
+from utils.utils_general import WordMap, get_data_seq
 
 def get_type_dict(kb_path):
     with open(kb_path,'r') as f:
@@ -17,7 +18,6 @@ def get_type_dict(kb_path):
                 type_dict[relationship].append(entity)
         return type_dict
 
-
 def getEntityList(type_dict):
     entityList = []
     for key in type_dict.keys():
@@ -26,12 +26,12 @@ def getEntityList(type_dict):
     return entityList
 
 def read_file(file_train, type_dict, entityList):
-    ent_word = set()  #统计response的单词
+
     context_arr,data = [],[]
     max_resp_len = 0
     with open(file_train,'r') as f:
         for line in f.readlines():
-            line = line.strip('\n')
+            line = line.strip()
             if line:
                 turn_id, line = line.split(' ',1)
                 if '\t' in line:
@@ -41,32 +41,39 @@ def read_file(file_train, type_dict, entityList):
                     context_arr += gen_u
                     #计算local pointer的标准值
                     local_ptr = []
+                    ent_word = set()  # 统计response的单词
                     for key in response.split(' '):
-                        ent_word.add(key)
                         if key in entityList:
-                            for i in range(len(context_arr), -1):
+                            ent_word.add(key)
+                            find = False
+                            for i in range(len(context_arr)-1,-1, -1):  #range使用出错
                                 if context_arr[i][0] == key:
                                     local_ptr.append(i)
+                                    find = True
                                     break
+                            if not find:
+                                local_ptr.append(len(context_arr))
                         else:
                             local_ptr.append(len(context_arr))
                     #计算全局指针，统计上下文有没有在当前回答中出现
-                    global_ptr =[1 if triplet[0] in response.split() else 0 for triplet in context_arr]
+                    global_ptr =[1 if triplet[0] in response.split() else 0 for triplet in context_arr] + [1] #最后为什么要+1
                     sketch_response = generate_sketch_response(response,entityList,type_dict)
 
-                    gen_r = generate_memory(response, '$r', turn_id)
-                    context_arr += gen_r #将当前回答加入上下文
                     data_details = {
                         'context_arr':context_arr +[['$$$']*MEM_TOKEN_SIZE], #为什么后面要追加NULL表示符号？
                         'response':response,
-                        "local_ptr":local_ptr,
+                        "local_ptr":local_ptr+[len(context_arr)],
                         'global_ptr':global_ptr,
                         'sketch_response':sketch_response
                     }
                     data.append(data_details)
-                    max_resp_len = max(max_resp_len,len(response.split()))  #记录回答的最长长度
-                else: #表示这段话结束
-                    context_arr = []  #这里不知道是做什么
+                    gen_r = generate_memory(response, '$r', turn_id)
+                    context_arr += gen_r  # 将当前回答加入上下文
+                    max_resp_len = max(max_resp_len,len(response.split())) + 1  #记录回答的最长长度
+                else:   #表示这段话结束 #这里不知道是做什么
+                    response = line
+                    kb_info = generate_memory(response,"",turn_id)
+                    context_arr = kb_info + context_arr
             else:
                 context_arr = []
 
@@ -96,11 +103,18 @@ def generate_memory(tokens,speaker,turn_id):
         for idx, token in enumerate(tokens):
             tmp = [token, speaker, 'turn'+turn_id,'word'+str(idx)] + ['PAD']*(MEM_TOKEN_SIZE-4)
             gen_content.append(tmp)
-
+    else:
+        if tokens[1] == "R_rating":
+            tokens = tokens +["PAD"]*(MEM_TOKEN_SIZE-len(tokens))
+        else:
+            tokens = tokens[::-1] +["PAD"] *(MEM_TOKEN_SIZE - len(tokens))
+        gen_content.append(tokens)
     return gen_content
 
 
 
+def get_seq():
+    pass
 
 def prepare_data(task):
     '''
@@ -122,7 +136,14 @@ def prepare_data(task):
     dev_data,max_dev_len = read_file(file_dev, type_dict, entityList)
     tst_data,max_tst_len = read_file(file_tst, type_dict, entityList)
     tst_oov_data,max_tst_oov_len = read_file(file_tst_oov, type_dict,entityList)
-    print(train_data[:4])
+    max_resp_len = max(max_trn_len,max_tst_len,max_dev_len,max_tst_oov_len) + 1
+
+    word_map = WordMap() #用来将输入转化为id
+    get_data_seq(train_data,word_map,first = True)
+
+
+
+    # print(train_data[0])
 
     # print(type_dict.keys())
 prepare_data(1)
