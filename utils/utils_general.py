@@ -3,24 +3,30 @@ import torch.utils.data as data
 import copy
 import torch
 
+
+def _cuda(x):
+    if USE_CUDA:
+        return x.cuda()
+    else:
+        return x
+
+
 class WordMap:
     def __init__(self):
         self.word2index = {'UNK': UNK_token, 'PAD': PAD_token, 'SOS': SOS_token, 'EOS': EOS_token}
-        self.index2word = dict([(v , k) for k,v in self.word2index.items()])
+        self.index2word = dict([(v, k) for k, v in self.word2index.items()])
         self.n_words = len(self.word2index)
 
-    def index_words(self,words):
-        try:
+    def index_words(self, words, is_triple=True):
+        if is_triple:
+            for word in words.split(' '):
+                self.index_word(word)
+        else:
             for word_triple in words:
-                if type(word_triple) is list:
-                    for word in word_triple:
-                        self.index_word(word)
-                else:
-                    self.index_word(word_triple)
-        except Exception as e:
-            print(e)
+                for word in word_triple:
+                    self.index_word(word)
 
-    def index_word(self,word):
+    def index_word(self, word):
         if word not in self.word2index.keys():
             self.word2index[word] = self.n_words
             self.index2word[self.n_words] = word
@@ -28,27 +34,27 @@ class WordMap:
 
 
 class Dataset(data.Dataset):
-    #自定义数据集
+    # 自定义数据集
     def __init__(self, data_seq, word2id):
         self.data_seq = copy.deepcopy(data_seq)
         self.word2id = word2id
-        self.total_len = len(data_seq['context_arr'])
+        self.total_len = len(data_seq[0])  # 不知道这个会不会有改变
 
     def __getitem__(self, index):
-        context_arr = self.data_seq['context_arr'][index]
-        context_arr = self.change_word2id(context_arr,True)
+        context_arr = self.data_seq[index]['context_arr']
+        context_arr = self.change_word2id(context_arr, True)
 
-        response = self.data_seq['response'][index]
-        response = self.change_word2id(response,False)
+        response = self.data_seq[index]['response']
+        response = self.change_word2id(response, False)
 
-        local_ptr = self.data_seq['local_ptr'][index]
-        global_ptr = self.data_seq['global_ptr'][index]
+        local_ptr = self.data_seq[index]['local_ptr']
+        global_ptr = self.data_seq[index]['global_ptr']
 
-        sketch_response = self.data_seq['sketch_response'][index]
-        sketch_response = self.change_word2id(sketch_response,False)
+        sketch_response = self.data_seq[index]['sketch_response']
+        sketch_response = self.change_word2id(sketch_response, False)
 
         data_info = {}
-        for key in self.data_seq.keys():
+        for key in self.data_seq[0].keys():
             try:
                 data_info[key] = locals()[key]
             except Exception as e:
@@ -59,14 +65,12 @@ class Dataset(data.Dataset):
     def __len__(self):
         return self.total_len
 
-
-
-    def change_word2id(self,data,isTriple = False):
-        if isTriple:
-            ids = [self.word2id[word] if word in self.word2id else UNK_token for word in data.split(',') ] + [EOS_token]
+    def change_word2id(self, data, is_triple=False):
+        if is_triple:
+            ids = [self.word2id[word] if word in self.word2id else UNK_token for word in data.split(',')] + [EOS_token]
         else:
             ids = []
-            for i,word_triplet in enumerate(data):
+            for i, word_triplet in enumerate(data):
                 ids.append([])
                 for word in word_triplet:
                     tmp = self.word2id[word] if word in self.word2id else UNK_token
@@ -75,29 +79,78 @@ class Dataset(data.Dataset):
 
         return ids
 
+    def collate_fn(self, data):
+
+        def merge(sequences, is_triple = False, pad_zeros = False):
+            lengths = [len(seq) for seq in sequences]
+            max_length = max(lengths) if max(lengths) > 0 else 1
+            if pad_zeros:
+                padded_seqs = torch.zeros(len(sequences), max_length).long()
+            else:
+                if is_triple:
+                    padded_seqs = torch.ones(len(sequences), max_length, MEM_TOKEN_SIZE).long()
+                else:
+                    padded_seqs = torch.ones(len(sequences), max_length).long()
+
+            for i, seq in enumerate(sequences):
+                end = lengths[i]
+                padded_seqs[i, :end] = seq[:end]  # seq是[[],[]]的新式，也就是一份data_details的数据
+
+            return padded_seqs, lengths
+
+        data.sort(key=lambda x: len(x['context_arr']), reverse=True)  # 暂时使用context_arr，而不是conv_arr
+        data_info = {}
+        for key in data[0].keys():  # 按照内容聚合
+            data_info[key] = [d[key] for d in data]
+
+        # merge sequences
+        context_arr, context_arr_lengths = merge(data_info['context_arr'], is_triple = True)
+        response, response_lengths = merge(data_info['response'], is_triple = False)
+        sketch_response, sketch_response_lengths = merge(data_info['sketch_response'], is_triple = False)
+
+        # merge id
+        global_ptr, global_ptr_lengths = merge(data_info['global_ptr'], is_triple = False, pad_zeros = True)
+        local_ptr, local_ptr_lengths = merge(data_info['local_ptr'], is_triple = False, pad_zeros = True)
+
+        # convert to contiguous and cuda
+        context_arr = _cuda(context_arr.contiguous())
+        response = _cuda(response.contiguous())
+        sketch_response = _cuda(sketch_response.contiguous())
+        global_ptr = _cuda(global_ptr.contiguous())
+        local_ptr = _cuda(local_ptr.contiguous())
+
+        for key in data_info.keys():
+            try:
+                data_info[key] = locals()[key]
+            except Exception as e:
+                print("locals() failed")
+
+        # additional plain information
+        data_info['context_arr_lengths'] = context_arr_lengths
+        data_info['response_lengths'] = response_lengths
+
+        return data_info
 
 
-def get_data_seq(data,word_map,first):
-    data_seq = {}
-    for key in data[0].keys():
-        data_seq[key] = []
+def get_data_seq(data, word_map, first):
+    """
+    Args:
+        data (list):list的每个元素都是一个字典
+        word_map (WordMap对象): 利用对象保存word与id的映射
+        first (bool):是否是第一次统计，只统计一次，完成word与id的映射
 
-    for data_item in data:
-        for key in data_item.keys():
-            data_seq[key].append(data_item[key])
-        if first:
-            word_map.index_words(data_item['context_arr'])
-            word_map.index_words(data_item['response'])
-            word_map.index_words(data_item['sketch_response'])
-    print(data_seq)
-    print('*'*50)
+    Returns:
+
+    """
+
+    if first:  # 只处理train数据集
+        for data_item in data:
+            word_map.index_words(data_item['context_arr'], is_triple=False)
+            word_map.index_words(data_item['response'], is_triple=True)
+            word_map.index_words(data_item['sketch_response'], is_triple=True)
+    # print(data_seq)
+    print('*' * 50)
     print(word_map.word2index)
     # 制作数据集
-    dataset = Dataset(data_seq,word_map.word2index)
-    #制作批量训练数据
-
-
-
-
-
-
+    dataset = Dataset(data, word_map.word2index)
+    # 制作批量训练数据
