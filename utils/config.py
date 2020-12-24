@@ -5,6 +5,10 @@ PAD_token = 1
 SOS_token = 3
 EOS_token = 2
 
+if (os.cpu_count() > 8):
+    USE_CUDA = True
+else:
+    USE_CUDA = False
 
 parser = argparse.ArgumentParser(description = "parameters")
 parser.add_argument('dataset')
