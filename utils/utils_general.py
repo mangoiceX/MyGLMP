@@ -1,4 +1,7 @@
 from utils.config import *
+import torch.utils.data as data
+import copy
+import torch
 
 class WordMap:
     def __init__(self):
@@ -23,6 +26,57 @@ class WordMap:
             self.index2word[self.n_words] = word
             self.n_words += 1
 
+
+class Dataset(data.Dataset):
+    #自定义数据集
+    def __init__(self, data_seq, word2id):
+        self.data_seq = copy.deepcopy(data_seq)
+        self.word2id = word2id
+        self.total_len = len(data_seq['context_arr'])
+
+    def __getitem__(self, index):
+        context_arr = self.data_seq['context_arr'][index]
+        context_arr = self.change_word2id(context_arr,True)
+
+        response = self.data_seq['response'][index]
+        response = self.change_word2id(response,False)
+
+        local_ptr = self.data_seq['local_ptr'][index]
+        global_ptr = self.data_seq['global_ptr'][index]
+
+        sketch_response = self.data_seq['sketch_response'][index]
+        sketch_response = self.change_word2id(sketch_response,False)
+
+        data_info = {}
+        for key in self.data_seq.keys():
+            try:
+                data_info[key] = locals()[key]
+            except Exception as e:
+                print("locals() failed")
+
+        return data_info
+
+    def __len__(self):
+        return self.total_len
+
+
+
+    def change_word2id(self,data,isTriple = False):
+        if isTriple:
+            ids = [self.word2id[word] if word in self.word2id else UNK_token for word in data.split(',') ] + [EOS_token]
+        else:
+            ids = []
+            for i,word_triplet in enumerate(data):
+                ids.append([])
+                for word in word_triplet:
+                    tmp = self.word2id[word] if word in self.word2id else UNK_token
+                    ids[i].append(tmp)
+        ids = torch.Tensor(ids)
+
+        return ids
+
+
+
 def get_data_seq(data,word_map,first):
     data_seq = {}
     for key in data[0].keys():
@@ -38,6 +92,12 @@ def get_data_seq(data,word_map,first):
     print(data_seq)
     print('*'*50)
     print(word_map.word2index)
+    # 制作数据集
+    dataset = Dataset(data_seq,word_map.word2index)
+    #制作批量训练数据
+
+
+
 
 
 
