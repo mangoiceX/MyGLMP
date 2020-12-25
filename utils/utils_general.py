@@ -1,5 +1,4 @@
 from utils.config import *
-import torch.utils.data as data
 import copy
 import torch
 
@@ -33,14 +32,14 @@ class WordMap:
             self.n_words += 1
 
 
-class Dataset(data.Dataset):
+class Dataset(torch.utils.data.Dataset):
     # 自定义数据集
     def __init__(self, data_seq, word2id):
         self.data_seq = copy.deepcopy(data_seq)
         self.word2id = word2id
-        self.total_len = len(data_seq[0])  # 不知道这个会不会有改变
+        self.total_len = len(data_seq)  # 因为我是按照样本数作为第一维度，所以直接统计list长度
 
-    def __getitem__(self, index):
+    def __getitem__(self, index):  # 当使用索引时，就会调用该函数
         context_arr = self.data_seq[index]['context_arr']
         context_arr = self.change_word2id(context_arr, True)
 
@@ -66,8 +65,8 @@ class Dataset(data.Dataset):
         return self.total_len
 
     def change_word2id(self, data, is_triple=False):
-        if is_triple:
-            ids = [self.word2id[word] if word in self.word2id else UNK_token for word in data.split(',')] + [EOS_token]
+        if not is_triple:
+            ids = [self.word2id[word] if word in self.word2id else UNK_token for word in data.split(' ')] + [EOS_token]
         else:
             ids = []
             for i, word_triplet in enumerate(data):
@@ -79,7 +78,7 @@ class Dataset(data.Dataset):
 
         return ids
 
-    def collate_fn(self, data):
+    def collate_fn(self, data):  # 默认的collate_fn的输入参数是batch,是将batch_size个__getitem__的返回结果组成batch
 
         def merge(sequences, is_triple = False, pad_zeros = False):
             lengths = [len(seq) for seq in sequences]
@@ -94,7 +93,12 @@ class Dataset(data.Dataset):
 
             for i, seq in enumerate(sequences):
                 end = lengths[i]
-                padded_seqs[i, :end] = seq[:end]  # seq是[[],[]]的新式，也就是一份data_details的数据
+                seq = torch.Tensor(seq)
+                try:
+                    padded_seqs[i, :end] = seq[:end]  # seq是[[],[]]的新式，也就是一份data_details的数据
+                except:
+                    print(padded_seqs.shape)
+                    print(seq.shape)
 
             return padded_seqs, lengths
 
@@ -110,7 +114,7 @@ class Dataset(data.Dataset):
 
         # merge id
         global_ptr, global_ptr_lengths = merge(data_info['global_ptr'], is_triple = False, pad_zeros = True)
-        local_ptr, local_ptr_lengths = merge(data_info['local_ptr'], is_triple = False, pad_zeros = True)
+        local_ptr, local_ptr_lengths = merge(data_info['local_ptr'], is_triple = False, pad_zeros = False)
 
         # convert to contiguous and cuda
         context_arr = _cuda(context_arr.contiguous())
@@ -132,9 +136,10 @@ class Dataset(data.Dataset):
         return data_info
 
 
-def get_data_seq(data, word_map, first):
+def get_data_seq(data, word_map, batch_size, first = False):
     """
     Args:
+        batch_size ():
         data (list):list的每个元素都是一个字典
         word_map (WordMap对象): 利用对象保存word与id的映射
         first (bool):是否是第一次统计，只统计一次，完成word与id的映射
@@ -148,9 +153,14 @@ def get_data_seq(data, word_map, first):
             word_map.index_words(data_item['context_arr'], is_triple=False)
             word_map.index_words(data_item['response'], is_triple=True)
             word_map.index_words(data_item['sketch_response'], is_triple=True)
-    # print(data_seq)
-    print('*' * 50)
-    print(word_map.word2index)
+
     # 制作数据集
     dataset = Dataset(data, word_map.word2index)
     # 制作批量训练数据
+    data_loader = torch.utils.data.DataLoader(dataset = dataset,
+                                  batch_size = batch_size,
+                                  # shuffle = first,
+                                  collate_fn = dataset.collate_fn
+                                  )
+
+    return data_loader

@@ -18,7 +18,6 @@ class Const:
 
 const = Const()
 
-
 UNK_token = 0
 PAD_token = 1
 SOS_token = 3
@@ -30,7 +29,9 @@ else:
     USE_CUDA = False
 
 parser = argparse.ArgumentParser(description = "parameters")
-parser.add_argument('dataset')
+parser.add_argument('-d', '--dataset',help = 'dataset, babi or kvr')
+parser.add_argument('-t', '--task', help='Task Number', type = int)
+parser.add_argument('-b','--batch_size', help='Batch_size', type = int)
 args = vars(parser.parse_args())
 
 
