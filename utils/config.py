@@ -1,4 +1,23 @@
 import argparse
+import os
+
+
+# 常量模块
+
+class Const:
+    class ConstError(TypeError): pass
+    class ConstCaseError(ConstError): pass
+
+    def __setattr__(self,name, value):
+        if name in self.__dict__:
+            raise self.ConstError("Can't change const.{}".format(name))
+        if not name.isupper():
+            raise self.ConstCaseError("const name {} is not all uppercase".format(name))
+        self.__dict__[name] = value
+
+
+const = Const()
+
 
 UNK_token = 0
 PAD_token = 1
