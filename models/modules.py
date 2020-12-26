@@ -12,6 +12,7 @@ from utils.config import *
 import torch
 from utils.utils_general import _cuda
 
+
 class ContextRNN(nn.Module):
     def __init__(self, input_size, hidden_size, n_layers, dropout):
         self.input_size = input_size
@@ -37,6 +38,58 @@ class ContextRNN(nn.Module):
         output = self.W(output)
 
         return output, hidden
+
+
+class ExternalKnowledge(nn.Module):
+    def __init__(self, hop, vocab_size, embedding_dim):
+
+        self.max_hops = hop
+        for i in range(self.max_hops + 1):
+            C = nn.Embedding(vocab_size, embedding_dim, padding_idx= PAD_token)
+            C.weight.data.normal_(0,0.01)
+            self.add_module("C_{}".format(hop), C)
+        self.C = AttrProxy(self, 'C_')
+
+        self.softmax = nn.Softmax(dim=1)
+
+    def add2memory(self,embed, rnn_output):
+        return embed
+
+
+    def load_memory(self, story, rnn_output, rnn_hidden):  #转载对话历史
+        self.m_story = []
+        query = rnn_hidden  # 语义转换
+
+        for hop in range(self.max_hops):
+            embedding_A = self.C[hop](story)
+            embedding_A = torch.sum(embedding_A, 2).squeeze(2)
+
+            if not args['ablationH']:
+                embedding_A = self.add2memory(embedding_A, rnn_output)
+
+            prob = (query * embedding_A)
+            prob = self.softmax(prob)
+
+            embedding_C = self.C[hop+1](story)
+            if not args['ablationH']:
+                embedding_C = self.add2memory(embedding_C, rnn_output)
+
+            o_k =  prob * embedding_C
+            query = query + o_k
+
+
+
+
+
+
+class AttrProxy(object):
+    def __init__(self, module, prefix=):
+        self.module = module
+        self.prefix = prefix
+
+    def __getitem__(self, index):
+        return getattr(self.module, self.prefix + str(index))
+
 
 
 
