@@ -111,12 +111,13 @@ class LocalMemory(nn.Module):
         self.projector = nn.Linear(2*embedding_dim, embedding_dim)
         self.C = shared_embed
 
-    def forward(self, story, extKnow, global_ptr, max_target_length, batch_size, encoded_hidden):
+    def forward(self, story, extKnow, global_ptr, story_length, max_target_length, batch_size, encoded_hidden, evaluating, copy_list):
         record = _cuda(torch.ones(story.size(0), story.size(1)))
         all_decoder_output_ptr = _cuda(torch.zeros(max_target_length, batch_size, story.size(1)))  # 这个初始化维度如何确定的
         all_decoder_output_vocab = _cuda(torch.zeros(max_target_length, batch_size, self.num_vocab))
         sketch_response = _cuda(torch.LongTensor([SOS_token] * batch_size))  # 为什么是batch_size
         hidden_init = self.projector(encoded_hidden)
+        decoded_fine, decoded_coarse = [], []
 
         # 使用sketch RNN逐字生成输出
         for t in range(max_target_length):
@@ -124,10 +125,43 @@ class LocalMemory(nn.Module):
             query = hidden[0]
 
             p_vocab = self.softmax(self.C.weight * hidden)
+            _, top_p_vocab = p_vocab.data.topk(1)
             all_decoder_output_vocab[t] = p_vocab
 
             # 使用sketch rnn的最后隐含态查询EK得到注意力分布，也就是local pointer
-            local_pointer, prob_soft = extKnow(query, global_ptr)
+            local_ptr, prob_soft = extKnow(query, global_ptr)
+            all_decoder_output_ptr[t] = local_ptr
+
+            if evaluating:
+                search_len = min(5, min(story_length))
+                prob_soft = prob_soft * record
+                _, top_p_soft = prob_soft.data.topk(search_len)
+
+                tmp_f, tmp_c = [], []
+                for bi in range(batch_size):
+                    token = top_p_vocab[bi].item()
+                    tmp_c.append(self.word_map.index2word[token])
+
+                    if '@' in self.word_map.index2word[token]:  #'@R_cuisine','@R_location','@R_number','@R_price'
+                        for i in range(search_len):
+                            cw = 'UNK'
+                            if top_p_soft[i][bi] < story_length[bi]-1:
+                                cw = copy_list[bi][top_p_soft[i][bi].item()]
+                                break
+                            tmp_f.append(cw)
+                        if args['record']:
+                            record[bi][top_p_soft[i][bi].item()] = 0  # copy_list中已经使用的部分清零
+                    else:
+                        tmp_f.append(token)  # 如果不是那几个‘@’的话，则记录单词
+                decoded_fine.append(tmp_f)
+                decoded_coarse.append(tmp_c)
+
+        return all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse
+
+
+
+
+
 
 
 
