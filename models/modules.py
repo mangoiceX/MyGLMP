@@ -15,6 +15,7 @@ from utils.utils_general import _cuda
 
 class ContextRNN(nn.Module):
     def __init__(self, input_size, hidden_size, n_layers, dropout):
+        super().__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.n_layers = n_layers
@@ -42,7 +43,7 @@ class ContextRNN(nn.Module):
 
 class ExternalKnowledge(nn.Module):
     def __init__(self, hop, vocab_size, embedding_dim):
-
+        super().__init__()
         self.max_hops = hop
         for i in range(self.max_hops + 1):
             C = nn.Embedding(vocab_size, embedding_dim, padding_idx= PAD_token)
@@ -52,9 +53,8 @@ class ExternalKnowledge(nn.Module):
 
         self.softmax = nn.Softmax(dim=1)
 
-    def add2memory(self,embed, rnn_output):
+    def add2memory(self, embed, rnn_output):
         return embed
-
 
     def load_memory(self, story, rnn_output, rnn_hidden):  #转载对话历史
         self.m_story = []
@@ -67,15 +67,77 @@ class ExternalKnowledge(nn.Module):
             if not args['ablationH']:
                 embedding_A = self.add2memory(embedding_A, rnn_output)
 
-            prob = (query * embedding_A)
-            prob = self.softmax(prob)
+            prob_origin = (query * embedding_A)  # 查询向量和内存中的内容相乘计算出注意力分布
+            prob = self.softmax(prob_origin)
 
             embedding_C = self.C[hop+1](story)
             if not args['ablationH']:
                 embedding_C = self.add2memory(embedding_C, rnn_output)
 
-            o_k =  prob * embedding_C
+            o_k = prob * embedding_C  # 注意力分布和下一跳的存储内容相乘得到此时的输出
+            query = query + o_k  # 第k+1层的输入等于第k层的输入与输出相加
+
+            self.m_story.append(embedding_A)  # 保存第k个过程的矩阵
+        self.m_story.append(embedding_C)
+        return nn.sigmoid(prob_origin), query
+
+    def forward(self, rnn_hidden, global_ptr):
+        query = rnn_hidden
+
+        for hop in range(self.max_hops):
+            m_A = self.m_story[hop]
+            if not args['ablationG']:
+                m_A =  m_A * global_ptr
+
+            prob_origin = query * m_A
+            prob_soft = self.softmax(prob_origin)
+
+            m_C = self.m_story[hop+1]
+            if not args['ablationG']:
+                m_C = m_C * global_ptr
+            o_k = prob_soft * m_C
             query = query + o_k
+
+        return prob_origin, prob_soft  # 注意力分布 输出分布
+
+
+class LocalMemory(nn.Module):
+    def __init__(self, shared_embed, max_hops, word_map, embedding_dim, dropout):
+        self.max_hops = max_hops
+        self.softmax = nn.Softmax(dim=1)
+        self.word_map = word_map
+        self.num_vocab = word_map.n_words
+        self.sketch_rnn = nn.GRU(embedding_dim,embedding_dim,dropout=dropout)
+        self.projector = nn.Linear(2*embedding_dim, embedding_dim)
+        self.C = shared_embed
+
+    def forward(self, story, extKnow, global_ptr, max_target_length, batch_size, encoded_hidden):
+        record = _cuda(torch.ones(story.size(0), story.size(1)))
+        all_decoder_output_ptr = _cuda(torch.zeros(max_target_length, batch_size, story.size(1)))  # 这个初始化维度如何确定的
+        all_decoder_output_vocab = _cuda(torch.zeros(max_target_length, batch_size, self.num_vocab))
+        sketch_response = _cuda(torch.LongTensor([SOS_token] * batch_size))  # 为什么是batch_size
+        hidden_init = self.projector(encoded_hidden)
+
+        # 使用sketch RNN逐字生成输出
+        for t in range(max_target_length):
+            _, hidden = self.sketch_rnn(sketch_response, hidden_init)
+            query = hidden[0]
+
+            p_vocab = self.softmax(self.C.weight * hidden)
+            all_decoder_output_vocab[t] = p_vocab
+
+            # 使用sketch rnn的最后隐含态查询EK得到注意力分布，也就是local pointer
+            local_pointer, prob_soft = extKnow(query, global_ptr)
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -83,7 +145,7 @@ class ExternalKnowledge(nn.Module):
 
 
 class AttrProxy(object):
-    def __init__(self, module, prefix=):
+    def __init__(self, module, prefix):
         self.module = module
         self.prefix = prefix
 

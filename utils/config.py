@@ -32,7 +32,8 @@ parser = argparse.ArgumentParser(description = "parameters")
 parser.add_argument('-d', '--dataset',help = 'dataset, babi or kvr')
 parser.add_argument('-t', '--task', help='Task Number', type = int)
 parser.add_argument('-b','--batch_size', help='Batch_size', type = int)
-parser.add_argument('-abh', '--ablationH', type = bool, required = False)
+parser.add_argument('-abh', '--ablationH', type = bool, required = False, default = False)
+parser.add_argument('-abg', '--ablationG', type = bool, required = False, default = False)
 
 args = vars(parser.parse_args())
 
