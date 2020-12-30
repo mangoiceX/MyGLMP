@@ -42,10 +42,10 @@ class ContextRNN(nn.Module):
 
 
 class ExternalKnowledge(nn.Module):
-    def __init__(self, hop, vocab_size, embedding_dim):
+    def __init__(self, max_hops, vocab_size, embedding_dim):
         super().__init__()
-        self.max_hops = hop
-        for i in range(self.max_hops + 1):
+        self.max_hops = max_hops
+        for hop in range(self.max_hops + 1):
             C = nn.Embedding(vocab_size, embedding_dim, padding_idx= PAD_token)
             C.weight.data.normal_(0,0.01)
             self.add_module("C_{}".format(hop), C)
@@ -103,6 +103,7 @@ class ExternalKnowledge(nn.Module):
 
 class LocalMemory(nn.Module):
     def __init__(self, shared_embed, max_hops, word_map, embedding_dim, dropout):
+        super().__init__()
         self.max_hops = max_hops
         self.softmax = nn.Softmax(dim=1)
         self.word_map = word_map
@@ -157,25 +158,6 @@ class LocalMemory(nn.Module):
                 decoded_coarse.append(tmp_c)
 
         return all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class AttrProxy(object):

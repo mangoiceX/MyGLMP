@@ -1,5 +1,6 @@
 import argparse
 import os
+import torch
 
 
 # 常量模块
@@ -23,7 +24,8 @@ PAD_token = 1
 SOS_token = 3
 EOS_token = 2
 
-if (os.cpu_count() > 8):
+if torch.cuda.is_available():
+#  if (os.cpu_count() > 8):   # 官方代码为什么这样弄不知道
     USE_CUDA = True
 else:
     USE_CUDA = False
