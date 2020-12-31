@@ -26,7 +26,7 @@ class ContextRNN(nn.Module):
         self.gru = nn.GRU(self.hidden_size, self.hidden_size, n_layers, dropout = self.dropout, bidirectional = True)
         self.W = nn.Linear(2*self.hidden_size, self.hidden_size)
 
-    def forward(self, input_seqs):
+    def forward(self, input_seqs):  # 没有input_length
         embeddings = self.embedding(input_seqs)   # [batch_size, story_length, MEM_TOKEN_SIZE, hidden_size]
         embeddings = torch.sum(embeddings, 2)  # [batch_size, story_length, hidden_size]
         embeddings = self.dropout_layer(embeddings)
@@ -79,7 +79,7 @@ class ExternalKnowledge(nn.Module):
 
             self.m_story.append(embedding_A)  # 保存第k个过程的矩阵
         self.m_story.append(embedding_C)
-        return nn.sigmoid(prob_origin), query
+        return nn.sigmoid(prob_origin), query  # global pointer，和KB中读出来的值
 
     def forward(self, rnn_hidden, global_ptr):
         query = rnn_hidden
@@ -112,9 +112,10 @@ class LocalMemory(nn.Module):
         self.projector = nn.Linear(2*embedding_dim, embedding_dim)
         self.C = shared_embed
 
-    def forward(self, story, extKnow, global_ptr, story_length, max_target_length, batch_size, encoded_hidden, evaluating, copy_list):
-        record = _cuda(torch.ones(story.size(0), story.size(1)))
-        all_decoder_output_ptr = _cuda(torch.zeros(max_target_length, batch_size, story.size(1)))  # 这个初始化维度如何确定的
+    def forward(self, story_size, ext_know, global_ptr, story_length, max_target_length, batch_size, encoded_hidden,
+                evaluating, copy_list):
+        record = _cuda(torch.ones(story_size[0], story_size[1]))
+        all_decoder_output_ptr = _cuda(torch.zeros(max_target_length, batch_size, story_size[1]))  # 这个初始化维度如何确定的
         all_decoder_output_vocab = _cuda(torch.zeros(max_target_length, batch_size, self.num_vocab))
         sketch_response = _cuda(torch.LongTensor([SOS_token] * batch_size))  # 为什么是batch_size
         hidden_init = self.projector(encoded_hidden)
@@ -130,7 +131,7 @@ class LocalMemory(nn.Module):
             all_decoder_output_vocab[t] = p_vocab
 
             # 使用sketch rnn的最后隐含态查询EK得到注意力分布，也就是local pointer
-            local_ptr, prob_soft = extKnow(query, global_ptr)
+            local_ptr, prob_soft = ext_know(query, global_ptr)
             all_decoder_output_ptr[t] = local_ptr
 
             if evaluating:

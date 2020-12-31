@@ -12,6 +12,7 @@ import torch
 from utils.config import *
 from models.modules import ContextRNN, ExternalKnowledge, LocalMemory
 from torch import optim
+from utils.masked_cross_entropy import  masked_cross_entropy
 
 
 class GLMP(nn.Module):
@@ -28,6 +29,8 @@ class GLMP(nn.Module):
         self.max_hops = n_layers  # decoder的层数就是hop的数量
         self.n_layers = n_layers
         self.dropout = dropout
+
+        self.loss, self.loss_g, self.loss_v, self.loss_l, self.print_every = 0, 0, 0, 0, 1
 
         #  初始化基本组件
         if path:  # 默认加载的参数是CPU参数
@@ -62,7 +65,7 @@ class GLMP(nn.Module):
 
     def save_model(self, acc):  # 模型的存储
         name_data = "KVR/" if self.task == "" else 'BABI/'
-        directory ='save/GLMP-' + name_data + str(self.task) + 'HDS' + str(self.hidden_size) + 'BSZ' \
+        directory = 'save/GLMP-' + name_data + str(self.task) + 'HDS' + str(self.hidden_size) + 'BSZ' \
                    + str(args['batch_size']) + 'DR' + str(self.dropout) + 'L' + str(self.n_layers) + \
                     + 'LR' + str(self.lr) + 'ACC' + str(acc)
         if os.path.exists(directory):
@@ -71,7 +74,6 @@ class GLMP(nn.Module):
         torch.save(self.encoder, directory + '/enc.pth')
         torch.save(self.ext_know, directory + '/ext_know.pth')
         torch.save(self.decoder, directory + '/dec.pth')
-
 
     def train_batch(self, data, grad_threshold, reset = False):
         if reset:
@@ -120,6 +122,32 @@ class GLMP(nn.Module):
     def reset(self):
         self.loss, self.loss_g, self.loss_v, self.loss_l, self.print_every = 0, 0, 0, 0, 1
 
+    def encode_and_decode(self, data, max_target_length, evaluating=False):
+        # 暂时没有添加mask的带啊
+
+        story = data['context_arr']
+        encoder_output, encoder_hidden = self.encoder.forward(story)
+        global_ptr, ek_readout = self.ext_know.load_memory(story, encoder_output, encoder_hidden)  # ek_readout是q k+1
+        sketch_init = torch.cat((encoder_hidden, ek_readout))  # 暂时无法知道连接维度
+
+        copy_list = []
+        for each_context in data['context_arr']:
+            context = [word_triple[0] for word_triple in each_context]
+            copy_list.append(context)
+
+        all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse = self.decoder(
+            story.size,
+            self.ext_know,
+            global_ptr,
+            data['context_arr_lengths'],  # 在处理数据的时候没有添加该字段
+            max_target_length,
+            args['batch_size'],
+            sketch_init,  #
+            evaluating,
+            copy_list
+        )
+
+        return all_decoder_output_vocab, all_decoder_output_ptr, global_ptr
 
 
 
