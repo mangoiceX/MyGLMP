@@ -149,6 +149,16 @@ class GLMP(nn.Module):
 
         return all_decoder_output_vocab, all_decoder_output_ptr, global_ptr
 
+    def print_loss(self):
+        print_loss_avg = self.loss / self.print_every
+        print_loss_g = self.loss_g / self.print_every
+        print_loss_l = self.loss_l / self.print_every
+        print_loss_v = self.loss_v / self.print_every
+
+        self.print_every += 1
+
+        return 'L:{:.2f},LG:{:..2f},LL:{:.2f},LV:{:.2f}'.format(print_loss_avg, print_loss_g, print_loss_l, print_loss_v)
+
 
 
 
