@@ -13,6 +13,7 @@ from utils.config import *
 from models.modules import ContextRNN, ExternalKnowledge, LocalMemory
 from torch import optim
 from utils.masked_cross_entropy import  masked_cross_entropy
+from utils.measures import moses_multi_bleu
 from tqdm import tqdm
 import numpy as np
 
@@ -160,7 +161,8 @@ class GLMP(nn.Module):
         acc, total = 0, 0
 
         for i, data_item in tqdm(enumerate(dev), total=len(dev)):
-            _, _, decoded_fine, decoded_coarse, global_ptr = self.encode_and_decode(data_item, self.max_resp_len, evaluating=True)
+            _, _, decoded_fine, decoded_coarse, global_ptr = self.encode_and_decode(data_item, self.max_resp_len,
+                                                                                    evaluating=True)
             # decoded_fine是以一个batch的一个单词组成的列表为最内维度，所以倒置转化成行为一个完整的句子的预测疏输出
             decoded_fine, decoded_coarse = map(lambda x : np.transpose(np.array(x)), (decoded_fine, decoded_coarse))
             for bi, word_fine in enumerate(decoded_fine):
