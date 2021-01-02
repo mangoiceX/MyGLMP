@@ -154,7 +154,7 @@ def prepare_data(task, batch_size):
     tst_loader = get_data_seq(tst_data, word_map, batch_size, first=False)
     tst_oov_loader = get_data_seq(tst_oov_data, word_map, batch_size, first=False)
 
-    return train_loader, dev_loader, tst_loader, tst_oov_loader, max_resp_len
+    return train_loader, dev_loader, tst_loader, tst_oov_loader, word_map, max_resp_len
 
 if __name__ == '__main__':
 
