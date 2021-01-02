@@ -13,7 +13,8 @@ from utils.config import *
 from models.modules import ContextRNN, ExternalKnowledge, LocalMemory
 from torch import optim
 from utils.masked_cross_entropy import  masked_cross_entropy
-
+from tqdm import tqdm
+import numpy as np
 
 class GLMP(nn.Module):
     def __init__(self,hidden_size, word_map, max_resp_len, task, lr, n_layers, dropout, path=None):
@@ -63,11 +64,11 @@ class GLMP(nn.Module):
             self.ext_know.cuda()
             self.decoder.cuda()
 
-    def save_model(self, acc):  # 模型的存储
+    def save_model(self, metrics):  # 模型的存储
         name_data = "KVR/" if self.task == "" else 'BABI/'
         directory = 'save/GLMP-' + name_data + str(self.task) + 'HDS' + str(self.hidden_size) + 'BSZ' \
                    + str(args['batch_size']) + 'DR' + str(self.dropout) + 'L' + str(self.n_layers) + \
-                    + 'LR' + str(self.lr) + 'ACC' + str(acc)
+                    + 'LR' + str(self.lr) + 'ACC' + str(metrics)
         if os.path.exists(directory):
             os.path.mkdir(directory)
 
@@ -147,7 +148,54 @@ class GLMP(nn.Module):
             copy_list
         )
 
-        return all_decoder_output_vocab, all_decoder_output_ptr, global_ptr
+        return all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse, global_ptr
+
+    def evaluate(self, dev, metric_best, early_stop = None):
+        print('STARTING EVALUATING...')
+        self.encoder.train(False)
+        self.ext_know.train(False)
+        self.decoder.train(False)
+
+        label, pred = [],[]
+        acc, total = 0, 0
+
+        for i, data_item in tqdm(enumerate(dev), total=len(dev)):
+            _, _, decoded_fine, decoded_coarse, global_ptr = self.encode_and_decode(data_item, self.max_resp_len, evaluating=True)
+            # decoded_fine是以一个batch的一个单词组成的列表为最内维度，所以倒置转化成行为一个完整的句子的预测疏输出
+            decoded_fine, decoded_coarse = map(lambda x : np.transpose(np.array(x)), (decoded_fine, decoded_coarse))
+            for bi, word_fine in enumerate(decoded_fine):
+                response_fine = ''
+                for e in word_fine:
+                    if e == 'EOS':
+                        break
+                    response_fine += (e + ' ')
+                pred_sentence = response_fine.strip()
+                pred.append(pred_sentence)
+                label_sentence = data_item['response'][bi].strip()
+                label.append(label_sentence)
+
+                if pred_sentence == label_sentence:
+                    acc += 1
+                total += 1
+        acc_score = acc / float(total)
+        print('ACC SCORE:\t{}'.format(acc_score))
+
+        self.encoder.train(True)
+        self.ext_know.train(True)
+        self.decoder.train(True)
+
+        bleu_score = moses_multi_bleu(np.array(pred), np.array(label), lowercase=True)
+
+        if early_stop == 'BLEU':
+            if bleu_score >= metric_best:
+                self.save_model('BLEU-'+str(bleu_score))
+                print('MODEL SAVED')
+                return bleu_score
+            else:
+                if acc_score >= metric_best:
+                    self.save_model('ACC-'+str(acc_score))
+                    print('MODEL SAVED')
+                    return acc_score
 
     def print_loss(self):
         print_loss_avg = self.loss / self.print_every

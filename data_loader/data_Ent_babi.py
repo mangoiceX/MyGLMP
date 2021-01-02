@@ -31,7 +31,9 @@ def read_file(file_train, type_dict, entity_list):
     context_arr, data = [], []
     max_resp_len = 0
     with open(file_train, 'r') as f:
+        cnt_line = -1
         for line in f.readlines():
+            cnt_line += 1
             line = line.strip()
             if line:
                 turn_id, line = line.split(' ', 1)
@@ -66,7 +68,8 @@ def read_file(file_train, type_dict, entity_list):
                         'response': response,
                         "local_ptr": local_ptr + [len(context_arr)],
                         'global_ptr': global_ptr,
-                        'sketch_response': sketch_response
+                        'sketch_response': sketch_response,
+                        'ID': cnt_line
                     }
                     data.append(data_details)
                     gen_r = generate_memory(response, '$r', turn_id)
