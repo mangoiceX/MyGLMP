@@ -79,7 +79,7 @@ class GLMP(nn.Module):
 
     def train_batch(self, data, grad_threshold, reset = False):
         if reset:
-            self.rest()
+            self.reset()
 
         # Zero gradients of all optimizers
         self.encoder_optimizer.zero_grad()
@@ -87,20 +87,20 @@ class GLMP(nn.Module):
         self.decoder_optimizer.zero_grad()
 
         # Encode and Decode
-        max_target_length = max(data['max_resp_len'])  # decoder要根据最长长度来生成回答
-        all_decoder_output_vocab, local_ptr, global_ptr = self.encode_and_decode(data, max_target_length, evaluating = False)
+        max_target_length = self.max_resp_len  # decoder要根据最长长度来生成回答
+        all_decoder_output_vocab, local_ptr, _, _, global_ptr = self.encode_and_decode(data, max_target_length, evaluating=False)
 
         # Loss calculation and backpropagation
         loss_g = nn.BCELoss(global_ptr, data['global_ptr'])
         loss_v = masked_cross_entropy(
             all_decoder_output_vocab,
             data['sketch_response'],
-            data['response_lengths']  # 这个没在data中添加
+            data['response_lengths']
         )
         loss_l = masked_cross_entropy(
             local_ptr,
             data['local_ptr'],
-            data['local_ptr_length']  # 这个没在data中添加
+            data['local_ptr_lengths']  # 这个没在data中添加
         )
 
         loss = loss_g + loss_v + loss_l
@@ -127,9 +127,9 @@ class GLMP(nn.Module):
     def encode_and_decode(self, data, max_target_length, evaluating=False):
         # 暂时没有添加mask的带啊
 
-        story = data['context_arr']
-        encoder_output, encoder_hidden = self.encoder.forward(story)
-        global_ptr, ek_readout = self.ext_know.load_memory(story, encoder_output, encoder_hidden)  # ek_readout是q k+1
+        story = data['context_arr']  # [8, 70, 4] 8是bsz, 70是一段对话的单词个数,4是每个词表示的维度
+        encoder_output, encoder_hidden = self.encoder.forward(story, data['context_arr_lengths'])
+        global_ptr, ek_readout = self.ext_know.load_memory(story, data['context_arr_lengths'], encoder_output, encoder_hidden)  # ek_readout是q k+1
         sketch_init = torch.cat((encoder_hidden, ek_readout))  # 暂时无法知道连接维度
 
         copy_list = []
@@ -137,11 +137,12 @@ class GLMP(nn.Module):
             context = [word_triple[0] for word_triple in each_context]
             copy_list.append(context)
 
+        # 2021.1.3 debug到这里
         all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse = self.decoder(
             story.size,
             self.ext_know,
             global_ptr,
-            data['context_arr_lengths'],  # 在处理数据的时候没有添加该字段
+            data['context_arr_lengths'],
             max_target_length,
             args['batch_size'],
             sketch_init,  #

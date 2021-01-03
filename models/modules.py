@@ -16,27 +16,32 @@ from utils.utils_general import _cuda
 class ContextRNN(nn.Module):
     def __init__(self, input_size, hidden_size, n_layers, dropout):
         super().__init__()
-        self.input_size = input_size
+        self.input_size = input_size  # 116 是词汇表的大小
         self.hidden_size = hidden_size
         self.n_layers = n_layers
         self.dropout = dropout
         self.dropout_layer = nn.Dropout(self.dropout)
 
-        self.embedding = nn.Embedding(self.input_size, self.hidden_size, padding_idx = PAD_token)
-        self.gru = nn.GRU(self.hidden_size, self.hidden_size, n_layers, dropout = self.dropout, bidirectional = True)
+        self.embedding = nn.Embedding(self.input_size, self.hidden_size, padding_idx=PAD_token)
+        self.gru = nn.GRU(self.hidden_size, self.hidden_size, n_layers, dropout=self.dropout, bidirectional=True)
+        #  gru的hidden state的维度是(num_layers*num_directions, batch, hidden size)
         self.W = nn.Linear(2*self.hidden_size, self.hidden_size)
 
-    def forward(self, input_seqs):  # 没有input_length
+    def forward(self, input_seqs, input_lengths):  # input_lengths是该batch中，每个故事的长度
         embeddings = self.embedding(input_seqs)   # [batch_size, story_length, MEM_TOKEN_SIZE, hidden_size]
         embeddings = torch.sum(embeddings, 2)  # [batch_size, story_length, hidden_size]
-        embeddings = self.dropout_layer(embeddings)
+        embeddings = self.dropout_layer(embeddings)  # 为什么要使用dropout
 
-        hidden_init = _cuda(torch.zeros(2, input_seqs.size(0), self.hidden_size))  # 隐含状态的初始值
+        hidden_init = _cuda(torch.zeros(2*self.n_layers, input_seqs.size(0), self.hidden_size))  # [2, batch_size, hidden_size]隐含状态的初始值
+        if input_lengths:
+            embeddings = nn.utils.rnn.pack_padded_sequence(embeddings, input_lengths, batch_first=True)
+        output, hidden = self.gru(embeddings, hidden_init)  # output [] hidden [2, batch_size, hidden_size]
+        # outputs   (seq_len, batch, num_directions * hidden_size) hidden [2 8 128](num_layers * num_directions, batch, hidden_size)
 
-        output, hidden = self.gru(embeddings, hidden_init)
-
+        if input_lengths:  # 消除pack_padded_sequence的填充
+            output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)  #
         hidden = self.W(torch.cat((hidden[0], hidden[1]), dim=1))
-        output = self.W(output)
+        output = self.W(output)  # [batch_size, story_length, hidden_size]
 
         return output, hidden
 
@@ -45,6 +50,7 @@ class ExternalKnowledge(nn.Module):
     def __init__(self, max_hops, vocab_size, embedding_dim):
         super().__init__()
         self.max_hops = max_hops
+        self.sigmoid = nn.Sigmoid()
         for hop in range(self.max_hops + 1):
             C = nn.Embedding(vocab_size, embedding_dim, padding_idx= PAD_token)
             C.weight.data.normal_(0,0.01)
@@ -53,33 +59,39 @@ class ExternalKnowledge(nn.Module):
 
         self.softmax = nn.Softmax(dim=1)
 
-    def add2memory(self, embed, rnn_output):
+    def add2memory(self, embed, rnn_output, context_arr_lengths):  # 调试到这里
+        for bi in range(embed.size(0)):
+            start, end = 0, context_arr_lengths[bi]
+            embed[bi, start:end, :] = embed[bi, start:end, :] + rnn_output[bi, :context_arr_lengths[bi], :]
         return embed
 
-    def load_memory(self, story, rnn_output, rnn_hidden):  #转载对话历史
+    def load_memory(self, story, context_arr_lengths, rnn_output, rnn_hidden):  #转载对话历史
         self.m_story = []
-        query = rnn_hidden  # 语义转换
+        query = rnn_hidden  # 语义转换 [batch_size, hidden_size]
 
         for hop in range(self.max_hops):
             embedding_A = self.C[hop](story)
-            embedding_A = torch.sum(embedding_A, 2).squeeze(2)
+            embedding_A = torch.sum(embedding_A, 2)  # 合并用来表示每个词的维度-4  [batch_size,story_length,hidden_size]
 
             if not args['ablationH']:
-                embedding_A = self.add2memory(embedding_A, rnn_output)
+                embedding_A = self.add2memory(embedding_A, rnn_output, context_arr_lengths)
 
-            prob_origin = (query * embedding_A)  # 查询向量和内存中的内容相乘计算出注意力分布
-            prob = self.softmax(prob_origin)
+            query_tmp = query.unsqueeze(1).expand_as(embedding_A)  # 需要对第二个维度进行拓展
+            prob_origin = torch.sum(query_tmp * embedding_A, 2)  # 查询向量和内存中的内容相乘计算出注意力分布
+            prob = self.softmax(prob_origin)  #[batch_size, story_length]
 
             embedding_C = self.C[hop+1](story)
+            embedding_C = torch.sum(embedding_C, 2)
             if not args['ablationH']:
-                embedding_C = self.add2memory(embedding_C, rnn_output)
+                embedding_C = self.add2memory(embedding_C, rnn_output, context_arr_lengths)
 
-            o_k = prob * embedding_C  # 注意力分布和下一跳的存储内容相乘得到此时的输出
+            prob_tmp = prob.unsqueeze(2).expand_as(embedding_C)
+            o_k = torch.sum(prob_tmp * embedding_C, 1)  # 注意力分布和下一跳的存储内容相乘得到此时的输出
             query = query + o_k  # 第k+1层的输入等于第k层的输入与输出相加
 
             self.m_story.append(embedding_A)  # 保存第k个过程的矩阵
-        self.m_story.append(embedding_C)
-        return nn.sigmoid(prob_origin), query  # global pointer，和KB中读出来的值
+        self.m_story.append(embedding_C)  # 最后一跳的内容A没有保存，C才有
+        return self.sigmoid(prob_origin), query  # global pointer，和KB中读出来的值
 
     def forward(self, rnn_hidden, global_ptr):
         query = rnn_hidden

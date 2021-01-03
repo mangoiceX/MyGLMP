@@ -18,11 +18,13 @@ import math
 metrics_best, cnt = 0.0, 0
 
 # 转换数据
-train_loader, dev_loader, tst_loader, tst_oov_loader, word_map, max_resp_len = prepare_data(args['task'], args['batch_size'])
+train_loader, dev_loader, tst_loader, tst_oov_loader, word_map, max_resp_len = prepare_data(args['task'],
+                                                                                            args['batch_size'])
 
 model = GLMP(args['hidden_size'], word_map, max_resp_len, args['task'], args['learning_rate'],
              args['layer_num'], args['drop'])
 
+# ,
 
 for epoch in range(args['epochs']):
     print('Epoch {}: '.format(epoch))

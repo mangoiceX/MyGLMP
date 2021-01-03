@@ -56,8 +56,8 @@ class Dataset(torch.utils.data.Dataset):
         for key in self.data_seq[0].keys():
             try:
                 data_info[key] = locals()[key]
-            except Exception as e:
-                print("locals() failed")
+            except:
+                data_info[key] = self.data_seq[index][key]
 
         return data_info
 
@@ -103,18 +103,18 @@ class Dataset(torch.utils.data.Dataset):
             return padded_seqs, lengths
 
         data.sort(key=lambda x: len(x['context_arr']), reverse=True)  # 暂时使用context_arr，而不是conv_arr
-        data_info = {}
+        item_info = {}
         for key in data[0].keys():  # 按照内容聚合
-            data_info[key] = [d[key] for d in data]
+            item_info[key] = [d[key] for d in data]
 
         # merge sequences
-        context_arr, context_arr_lengths = merge(data_info['context_arr'], is_triple = True)
-        response, response_lengths = merge(data_info['response'], is_triple = False)
-        sketch_response, sketch_response_lengths = merge(data_info['sketch_response'], is_triple = False)
+        context_arr, context_arr_lengths = merge(item_info['context_arr'], is_triple = True)
+        response, response_lengths = merge(item_info['response'], is_triple = False)
+        sketch_response, sketch_response_lengths = merge(item_info['sketch_response'], is_triple = False)
 
         # merge id
-        global_ptr, global_ptr_lengths = merge(data_info['global_ptr'], is_triple = False, pad_zeros = True)
-        local_ptr, local_ptr_lengths = merge(data_info['local_ptr'], is_triple = False, pad_zeros = False)
+        global_ptr, global_ptr_lengths = merge(item_info['global_ptr'], is_triple = False, pad_zeros = True)
+        local_ptr, local_ptr_lengths = merge(item_info['local_ptr'], is_triple = False, pad_zeros = False)
 
         # convert to contiguous and cuda
         context_arr = _cuda(context_arr.contiguous())
@@ -123,15 +123,17 @@ class Dataset(torch.utils.data.Dataset):
         global_ptr = _cuda(global_ptr.contiguous())
         local_ptr = _cuda(local_ptr.contiguous())
 
-        for key in data_info.keys():
+        data_info = {}
+        for key in item_info.keys():
             try:
                 data_info[key] = locals()[key]
-            except Exception as e:
-                print("locals() failed")
+            except:
+                data_info[key] = item_info[key]
 
         # additional plain information
         data_info['context_arr_lengths'] = context_arr_lengths
         data_info['response_lengths'] = response_lengths
+        data_info['local_ptr_lengths'] = local_ptr_lengths
 
         return data_info
 

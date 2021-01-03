@@ -30,13 +30,14 @@ if torch.cuda.is_available():
 else:
     USE_CUDA = False
 
+# -d=babi -t=1 -h=128 -lr=0.01 -ln=5 -d=0.1 -e=1 -gd=1000 -ep=4 -pt=8 -b=8
 parser = argparse.ArgumentParser(description = "parameters")
 parser.add_argument('-d', '--dataset',help = 'dataset, babi or kvr')
 parser.add_argument('-t', '--task', help='Task Number', type = int)
-parser.add_argument('-h', '--hidden_size', help = 'Hidden size', type = int)
+parser.add_argument('-hsz', '--hidden_size', help = 'Hidden size', type = int)
 parser.add_argument('-lr', '--learning_rate', help = 'Learning rate', type = float)
 parser.add_argument('-ln', '--layer_num', help = 'Layer Number', type = int)
-parser.add_argument('-d', '--drop', help = 'dropout', type = float)
+parser.add_argument('-dr', '--drop', help = 'dropout', type = float)
 parser.add_argument('-e', '--epochs', help = 'Epoch Number', type = int)
 parser.add_argument('-gd', '--grad_threshold', help = 'Gradient Threshold', type = float)
 parser.add_argument('-ep', '--eval_period', help = 'Evaluation period', type = int)
