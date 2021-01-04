@@ -84,7 +84,7 @@ class Dataset(torch.utils.data.Dataset):
             lengths = [len(seq) for seq in sequences]
             max_length = max(lengths) if max(lengths) > 0 else 1
             if pad_zeros:
-                padded_seqs = torch.zeros(len(sequences), max_length).long()
+                padded_seqs = torch.zeros(len(sequences), max_length).float()
             else:
                 if is_triple:
                     padded_seqs = torch.ones(len(sequences), max_length, MEM_TOKEN_SIZE).long()

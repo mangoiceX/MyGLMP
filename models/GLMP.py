@@ -31,6 +31,7 @@ class GLMP(nn.Module):
         self.max_hops = n_layers  # decoder的层数就是hop的数量
         self.n_layers = n_layers
         self.dropout = dropout
+        self.criterion_bce = nn.BCELoss()  # 这里需要带括号
 
         self.loss, self.loss_g, self.loss_v, self.loss_l, self.print_every = 0, 0, 0, 0, 1
 
@@ -91,7 +92,7 @@ class GLMP(nn.Module):
         all_decoder_output_vocab, local_ptr, _, _, global_ptr = self.encode_and_decode(data, max_target_length, evaluating=False)
 
         # Loss calculation and backpropagation
-        loss_g = nn.BCELoss(global_ptr, data['global_ptr'])
+        loss_g = self.criterion_bce(global_ptr, data['global_ptr'])
         loss_v = masked_cross_entropy(
             all_decoder_output_vocab,
             data['sketch_response'],
@@ -128,18 +129,20 @@ class GLMP(nn.Module):
         # 暂时没有添加mask的带啊
 
         story = data['context_arr']  # [8, 70, 4] 8是bsz, 70是一段对话的单词个数,4是每个词表示的维度
+        # encoder_output [batch_size, story_length, hidden_size]  encoder_hidden [batch_size, hidden_size]
         encoder_output, encoder_hidden = self.encoder.forward(story, data['context_arr_lengths'])
+        # ek_readout [batch_size, hidden_size] global_ptr [batch_size, story_length]
         global_ptr, ek_readout = self.ext_know.load_memory(story, data['context_arr_lengths'], encoder_output, encoder_hidden)  # ek_readout是q k+1
-        sketch_init = torch.cat((encoder_hidden, ek_readout))  # 暂时无法知道连接维度
+        sketch_init = torch.cat((encoder_hidden, ek_readout), dim=1)  # 暂时无法知道连接维度
 
+        # 通过四元组得到原始对话的单词列表
         copy_list = []
         for each_context in data['context_arr']:
             context = [word_triple[0] for word_triple in each_context]
             copy_list.append(context)
 
-        # 2021.1.3 debug到这里
-        all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse = self.decoder(
-            story.size,
+        all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse = self.decoder.forward(
+            story.size(),
             self.ext_know,
             global_ptr,
             data['context_arr_lengths'],
@@ -208,7 +211,7 @@ class GLMP(nn.Module):
 
         self.print_every += 1
 
-        return 'L:{:.2f},LG:{:..2f},LL:{:.2f},LV:{:.2f}'.format(print_loss_avg, print_loss_g, print_loss_l, print_loss_v)
+        return 'L:{:.2f},LG:{:.2f},LL:{:.2f},LV:{:.2f}'.format(print_loss_avg, print_loss_g, print_loss_l, print_loss_v)
 
 
 

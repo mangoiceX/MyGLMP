@@ -23,7 +23,8 @@ class ContextRNN(nn.Module):
         self.dropout_layer = nn.Dropout(self.dropout)
 
         self.embedding = nn.Embedding(self.input_size, self.hidden_size, padding_idx=PAD_token)
-        self.gru = nn.GRU(self.hidden_size, self.hidden_size, n_layers, dropout=self.dropout, bidirectional=True)
+        self.gru = nn.GRU(self.hidden_size, self.hidden_size, n_layers, dropout=self.dropout, bidirectional=True,
+                          batch_first=True)
         #  gru的hidden state的维度是(num_layers*num_directions, batch, hidden size)
         self.W = nn.Linear(2*self.hidden_size, self.hidden_size)
 
@@ -94,20 +95,30 @@ class ExternalKnowledge(nn.Module):
         return self.sigmoid(prob_origin), query  # global pointer，和KB中读出来的值
 
     def forward(self, rnn_hidden, global_ptr):
+        '''
+
+        Args:
+            rnn_hidden (): [batch_size, hidden_size]
+            global_ptr ():[batch_size, story_length]
+
+        Returns:
+
+        '''
         query = rnn_hidden
 
         for hop in range(self.max_hops):
-            m_A = self.m_story[hop]
+            m_A = self.m_story[hop]  # [batch_size, story_length, hidden_size]
             if not args['ablationG']:
-                m_A =  m_A * global_ptr
-
-            prob_origin = query * m_A
+                m_A = m_A * global_ptr.unsqueeze(2).expand_as(m_A)
+            query_tmp = query.unsqueeze(1).expand_as(m_A)
+            prob_origin = torch.sum(query_tmp * m_A, 2)  # 消除hidden_size维度
             prob_soft = self.softmax(prob_origin)
 
             m_C = self.m_story[hop+1]
             if not args['ablationG']:
-                m_C = m_C * global_ptr
-            o_k = prob_soft * m_C
+                m_C = m_C * global_ptr.unsqueeze(2).expand_as(m_C)
+            prob_tmp = prob_soft.unsqueeze(2).expand_as(m_C)
+            o_k = torch.sum(prob_tmp * m_C, 1)  # 消除story_length维度
             query = query + o_k
 
         return prob_origin, prob_soft  # 注意力分布 输出分布
@@ -119,31 +130,37 @@ class LocalMemory(nn.Module):
         self.max_hops = max_hops
         self.softmax = nn.Softmax(dim=1)
         self.word_map = word_map
+        self.dropout_layer = nn.Dropout(dropout)
         self.num_vocab = word_map.n_words
         self.sketch_rnn = nn.GRU(embedding_dim,embedding_dim,dropout=dropout)
-        self.projector = nn.Linear(2*embedding_dim, embedding_dim)
+        self.projector = nn.Linear(2*embedding_dim, embedding_dim)  # 默认num_layers=1
         self.C = shared_embed
 
     def forward(self, story_size, ext_know, global_ptr, story_length, max_target_length, batch_size, encoded_hidden,
                 evaluating, copy_list):
-        record = _cuda(torch.ones(story_size[0], story_size[1]))
-        all_decoder_output_ptr = _cuda(torch.zeros(max_target_length, batch_size, story_size[1]))  # 这个初始化维度如何确定的
+        record = _cuda(torch.ones(story_size[0], story_size[1]))  # [batch_size, story_length]
+        # all_decoder_output_ptr输出的是局部指针，是针对当前对话来说的
+        all_decoder_output_ptr = _cuda(torch.zeros(max_target_length, batch_size, story_size[1]))
+        # all_decoder_output_vocab 针对的是词汇表
         all_decoder_output_vocab = _cuda(torch.zeros(max_target_length, batch_size, self.num_vocab))
-        sketch_response = _cuda(torch.LongTensor([SOS_token] * batch_size))  # 为什么是batch_size
-        hidden_init = self.projector(encoded_hidden)
+        decoder_input = _cuda(torch.LongTensor([SOS_token] * batch_size))  # 每次为同一个batch的样本生成一个单词
+        hidden_init = self.projector(encoded_hidden).unsqueeze(0)  # 对连接降维
         decoded_fine, decoded_coarse = [], []
 
         # 使用sketch RNN逐字生成输出
         for t in range(max_target_length):
-            _, hidden = self.sketch_rnn(sketch_response, hidden_init)
-            query = hidden[0]
-
-            p_vocab = self.softmax(self.C.weight * hidden)
-            _, top_p_vocab = p_vocab.data.topk(1)
+            sketch_response = self.dropout_layer(self.C(decoder_input))  #[8] -> [1,8,128] .
+            if len(sketch_response.size()) == 2:
+                sketch_response = sketch_response.unsqueeze(0)
+            _, hidden = self.sketch_rnn(sketch_response, hidden_init)  # [seq_len, batch_size, embedding_dim]
+            query = hidden[-1]  # [num_layers * num_directions, batch, embedding_dim]  我认为结果包含了各层的隐含态
+            # p_vocab [batch_size, vocab_size]
+            p_vocab = self.softmax(hidden.squeeze(0).matmul(self.C.weight.transpose(1,0)))  #[vocab_size, embedding_dim]
+            _, top_p_vocab = p_vocab.data.topk(1)  # 获得上下文关注的词汇的序号
             all_decoder_output_vocab[t] = p_vocab
 
             # 使用sketch rnn的最后隐含态查询EK得到注意力分布，也就是local pointer
-            local_ptr, prob_soft = ext_know(query, global_ptr)
+            local_ptr, prob_soft = ext_know.forward(query, global_ptr)  # 如果不适用forward也可以达到同样效果吗
             all_decoder_output_ptr[t] = local_ptr
 
             if evaluating:

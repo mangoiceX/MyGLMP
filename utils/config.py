@@ -45,6 +45,7 @@ parser.add_argument('-pt','--patience', help = 'Patience', type = int)
 parser.add_argument('-b','--batch_size', help='Batch_size', type = int)
 parser.add_argument('-abh', '--ablationH', type = bool, required = False, default = False)
 parser.add_argument('-abg', '--ablationG', type = bool, required = False, default = False)
+parser.add_argument('-rec','--record', help='use record function during inference', type=int, required=False, default=0)
 
 args = vars(parser.parse_args())
 

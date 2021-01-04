@@ -29,11 +29,12 @@ model = GLMP(args['hidden_size'], word_map, max_resp_len, args['task'], args['le
 for epoch in range(args['epochs']):
     print('Epoch {}: '.format(epoch))
     pbar = tqdm(enumerate(train_loader), total=len(train_loader))
-    for i, data in enumerate(train_loader):
+    for i, data in pbar:
         model.train_batch(data, args['grad_threshold'], i == 0)
         pbar.set_description(model.print_loss())
 
     if (epoch + 1) % args['eval_period'] == 0:
+        #2020.1.4 debug到这里
         metrics_score = model.evaluate(dev_loader, metrics_best)
         model.scheduler.step(metrics_score)
 
