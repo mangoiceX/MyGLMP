@@ -27,7 +27,7 @@ model = GLMP(args['hidden_size'], word_map, max_resp_len, args['task'], args['le
 # ,
 
 for epoch in range(args['epochs']):
-    print('Epoch {}: '.format(epoch))
+    print('\nEpoch {}: '.format(epoch))
     pbar = tqdm(enumerate(train_loader), total=len(train_loader))
     for i, data in pbar:
         model.train_batch(data, args['grad_threshold'], i == 0)

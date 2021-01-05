@@ -49,7 +49,7 @@ class GLMP(nn.Module):
                 self.decoder = torch.load(str(path)+'/dec.pth')
         else:
             self.encoder = ContextRNN(self.input_size, self.hidden_size, self.n_layers, self.dropout)
-            self.ext_know = ExternalKnowledge(self.max_hops, self.word_map.n_words, self.hidden_size)
+            self.ext_know = ExternalKnowledge(self.max_hops, self.word_map.n_words, self.hidden_size, self.dropout)
             self.decoder = LocalMemory(self.encoder.embedding, self.max_hops, self.word_map, self.hidden_size, self.dropout)
 
         # 初始化优化器
@@ -68,11 +68,9 @@ class GLMP(nn.Module):
 
     def save_model(self, metrics):  # 模型的存储
         name_data = "KVR/" if self.task == "" else 'BABI/'
-        directory = 'save/GLMP-' + name_data + str(self.task) + 'HDS' + str(self.hidden_size) + 'BSZ' \
-                   + str(args['batch_size']) + 'DR' + str(self.dropout) + 'L' + str(self.n_layers) + \
-                    + 'LR' + str(self.lr) + 'ACC' + str(metrics)
-        if os.path.exists(directory):
-            os.path.mkdir(directory)
+        directory = 'save/GLMP-' + name_data + str(self.task) + 'HDD' + str(self.hidden_size) + 'BSZ' + str(args['batch_size']) + 'DR' + str(self.dropout) + 'L' + str(self.n_layers) + 'LR' + str(self.lr) + 'ACC' + str(metrics)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
         torch.save(self.encoder, directory + '/enc.pth')
         torch.save(self.ext_know, directory + '/ext_know.pth')
@@ -137,7 +135,7 @@ class GLMP(nn.Module):
 
         # 通过四元组得到原始对话的单词列表
         copy_list = []
-        for each_context in data['context_arr']:
+        for each_context in data['context_arr_plain']:
             context = [word_triple[0] for word_triple in each_context]
             copy_list.append(context)
 
@@ -156,7 +154,7 @@ class GLMP(nn.Module):
         return all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse, global_ptr
 
     def evaluate(self, dev, metric_best, early_stop = None):
-        print('STARTING EVALUATING...')
+        print('\nSTARTING EVALUATING...')
         self.encoder.train(False)
         self.ext_know.train(False)
         self.decoder.train(False)
@@ -172,12 +170,12 @@ class GLMP(nn.Module):
             for bi, word_fine in enumerate(decoded_fine):
                 response_fine = ''
                 for e in word_fine:
-                    if e == 'EOS':
+                    if e ==  'EOS':
                         break
                     response_fine += (e + ' ')
                 pred_sentence = response_fine.strip()
                 pred.append(pred_sentence)
-                label_sentence = data_item['response'][bi].strip()
+                label_sentence = data_item['response_plain'][bi].strip()  # 有一次bi会越界
                 label.append(label_sentence)
 
                 if pred_sentence == label_sentence:
@@ -190,18 +188,18 @@ class GLMP(nn.Module):
         self.ext_know.train(True)
         self.decoder.train(True)
 
-        bleu_score = moses_multi_bleu(np.array(pred), np.array(label), lowercase=True)
+        bleu_score = moses_multi_bleu(np.array(pred), np.array(label), lowercase=True)  # 暂时无法使用
 
         if early_stop == 'BLEU':
             if bleu_score >= metric_best:
                 self.save_model('BLEU-'+str(bleu_score))
                 print('MODEL SAVED')
                 return bleu_score
-            else:
-                if acc_score >= metric_best:
-                    self.save_model('ACC-'+str(acc_score))
-                    print('MODEL SAVED')
-                    return acc_score
+        else:
+            if acc_score >= metric_best:
+                self.save_model('ACC-'+str(acc_score))
+                print('MODEL SAVED')
+                return acc_score
 
     def print_loss(self):
         print_loss_avg = self.loss / self.print_every

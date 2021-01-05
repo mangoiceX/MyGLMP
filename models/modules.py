@@ -48,10 +48,12 @@ class ContextRNN(nn.Module):
 
 
 class ExternalKnowledge(nn.Module):
-    def __init__(self, max_hops, vocab_size, embedding_dim):
+    def __init__(self, max_hops, vocab_size, embedding_dim, dropout):
         super().__init__()
         self.max_hops = max_hops
         self.sigmoid = nn.Sigmoid()
+        self.dropout = dropout
+        self.dropout_layer = nn.Dropout(dropout)
         for hop in range(self.max_hops + 1):
             C = nn.Embedding(vocab_size, embedding_dim, padding_idx= PAD_token)
             C.weight.data.normal_(0,0.01)
@@ -76,6 +78,7 @@ class ExternalKnowledge(nn.Module):
 
             if not args['ablationH']:
                 embedding_A = self.add2memory(embedding_A, rnn_output, context_arr_lengths)
+            #embedding_A = self.dropout_layer(embedding_A)  # 为什么要添加dropout
 
             query_tmp = query.unsqueeze(1).expand_as(embedding_A)  # 需要对第二个维度进行拓展
             prob_origin = torch.sum(query_tmp * embedding_A, 2)  # 查询向量和内存中的内容相乘计算出注意力分布
@@ -112,7 +115,7 @@ class ExternalKnowledge(nn.Module):
                 m_A = m_A * global_ptr.unsqueeze(2).expand_as(m_A)
             query_tmp = query.unsqueeze(1).expand_as(m_A)
             prob_origin = torch.sum(query_tmp * m_A, 2)  # 消除hidden_size维度
-            prob_soft = self.softmax(prob_origin)
+            prob_soft = self.softmax(prob_origin)  # [batch_size, story_length]
 
             m_C = self.m_story[hop+1]
             if not args['ablationG']:
@@ -174,8 +177,9 @@ class LocalMemory(nn.Module):
                     tmp_c.append(self.word_map.index2word[token])
 
                     if '@' in self.word_map.index2word[token]:  #'@R_cuisine','@R_location','@R_number','@R_price'
+                        cw = 'UNK'  # 改为数值
                         for i in range(search_len):
-                            cw = 'UNK'
+
                             if top_p_soft[i][bi] < story_length[bi]-1:
                                 cw = copy_list[bi][top_p_soft[i][bi].item()]
                                 break
@@ -183,7 +187,7 @@ class LocalMemory(nn.Module):
                         if args['record']:
                             record[bi][top_p_soft[i][bi].item()] = 0  # copy_list中已经使用的部分清零
                     else:
-                        tmp_f.append(token)  # 如果不是那几个‘@’的话，则记录单词
+                        tmp_f.append(self.word_map.index2word[token])  # 如果不是那几个‘@’的话，则记录单词
                 decoded_fine.append(tmp_f)
                 decoded_coarse.append(tmp_c)
 

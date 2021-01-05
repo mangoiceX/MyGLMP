@@ -59,6 +59,10 @@ class Dataset(torch.utils.data.Dataset):
             except:
                 data_info[key] = self.data_seq[index][key]
 
+        # 保存为编码的数据，模型评估时需要使用
+        data_info['context_arr_plain'] = self.data_seq[index]['context_arr']
+        data_info['response_plain'] = self.data_seq[index]['response']
+
         return data_info
 
     def __len__(self):
@@ -162,7 +166,8 @@ def get_data_seq(data, word_map, batch_size, first = False):
     data_loader = torch.utils.data.DataLoader(dataset = dataset,
                                   batch_size = batch_size,
                                   # shuffle = first,
-                                  collate_fn = dataset.collate_fn
+                                  collate_fn = dataset.collate_fn,
+                                  drop_last=True
                                   )
 
     return data_loader
