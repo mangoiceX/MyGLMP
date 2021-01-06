@@ -24,8 +24,6 @@ train_loader, dev_loader, tst_loader, tst_oov_loader, word_map, max_resp_len = p
 model = GLMP(args['hidden_size'], word_map, max_resp_len, args['task'], args['learning_rate'],
              args['layer_num'], args['drop'])
 
-# ,
-
 for epoch in range(args['epochs']):
     print('\nEpoch {}: '.format(epoch))
     pbar = tqdm(enumerate(train_loader), total=len(train_loader))

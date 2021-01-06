@@ -33,7 +33,7 @@ def read_file(file_train, type_dict, entity_list):
     with open(file_train, 'r') as f:
         cnt_line = -1
         for line in f.readlines():
-            cnt_line += 1
+
             line = line.strip()
             if line:
                 turn_id, line = line.split(' ', 1)
@@ -64,7 +64,8 @@ def read_file(file_train, type_dict, entity_list):
                     sketch_response = generate_sketch_response(response, entity_list, type_dict)
 
                     data_details = {
-                        'context_arr': context_arr + [['$$$'] * MEM_TOKEN_SIZE],  # 为什么后面要追加NULL表示符号？
+                        'context_arr': context_arr + [['$$$$'] * MEM_TOKEN_SIZE],  # 为什么后面要追加NULL表示符号？
+                        'conv_arr': context_arr,
                         'response': response,
                         "local_ptr": local_ptr + [len(context_arr)],
                         'global_ptr': global_ptr,
@@ -80,6 +81,7 @@ def read_file(file_train, type_dict, entity_list):
                     kb_info = generate_memory(response, "", turn_id)
                     context_arr = kb_info + context_arr
             else:
+                cnt_line += 1
                 context_arr = []
 
     return data, max_resp_len
@@ -131,11 +133,11 @@ def prepare_data(task, batch_size):
         batch_size ():
     """
     data_path = '../data/dialog-bAbI-tasks'
-    file_train = '{}/dialog-babi-task{}trn.txt'.format(data_path, task)
-    file_dev = '{}/dialog-babi-task{}dev.txt'.format(data_path, task)
-    file_tst = '{}/dialog-babi-task{}tst.txt'.format(data_path, task)
+    file_train = '{}/dialog-babi-task{}trn-small.txt'.format(data_path, task)
+    file_dev = '{}/dialog-babi-task{}dev-small.txt'.format(data_path, task)
+    file_tst = '{}/dialog-babi-task{}tst-small.txt'.format(data_path, task)
     kb_path = '{}/dialog-babi-kb-all.txt'.format(data_path)
-    file_tst_oov = '{}/dialog-babi-task{}tst-OOV.txt'.format(data_path, task)
+    file_tst_oov = '{}/dialog-babi-task{}tst-OOV-small.txt'.format(data_path, task)
 
     type_dict = get_type_dict(kb_path)  # 中间结果
     # 实体列表

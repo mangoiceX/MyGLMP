@@ -1,0 +1,998 @@
+1 hello	hello what can i help you with today
+2 may i have a table in seoul	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with thai cuisine	how many people would be in your party
+5 for four people please	which price range are looking for
+6 in a expensive price range please	ok let me look into some options for you
+7 <SILENCE>	api_call thai seoul four expensive
+
+1 hello	hello what can i help you with today
+2 may i have a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with thai cuisine	where should it be
+5 tokyo please	how many people would be in your party
+6 for two people please	which price range are looking for
+7 i am looking for a expensive restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call thai tokyo two expensive
+
+1 good morning	hello what can i help you with today
+2 i'd like to book a table in seoul for eight	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love korean food	which price range are looking for
+5 in a cheap price range please	ok let me look into some options for you
+6 <SILENCE>	api_call korean seoul eight cheap
+
+1 hi	hello what can i help you with today
+2 may i have a table with cantonese cuisine in a cheap price range in seoul for two people	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call cantonese seoul two cheap
+
+1 hello	hello what can i help you with today
+2 may i have a table in a expensive price range for two	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love cantonese food	where should it be
+5 in beijing	ok let me look into some options for you
+6 <SILENCE>	api_call cantonese beijing two expensive
+
+1 good morning	hello what can i help you with today
+2 may i have a table with vietnamese cuisine for two in a cheap price range	i'm on it
+3 <SILENCE>	where should it be
+4 seoul please	ok let me look into some options for you
+5 <SILENCE>	api_call vietnamese seoul two cheap
+
+1 hello	hello what can i help you with today
+2 i'd like to book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with thai food	where should it be
+5 tokyo please	how many people would be in your party
+6 for four please	which price range are looking for
+7 in a moderate price range please	ok let me look into some options for you
+8 <SILENCE>	api_call thai tokyo four moderate
+
+1 hi	hello what can i help you with today
+2 i'd like to book a table in bangkok with cantonese cuisine in a cheap price range	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 we will be eight	ok let me look into some options for you
+5 <SILENCE>	api_call cantonese bangkok eight cheap
+
+1 hello	hello what can i help you with today
+2 can you make a restaurant reservation for two people in seoul	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean food	which price range are looking for
+5 in a cheap price range please	ok let me look into some options for you
+6 <SILENCE>	api_call korean seoul two cheap
+
+1 hello	hello what can i help you with today
+2 may i have a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean food	where should it be
+5 tokyo please	how many people would be in your party
+6 we will be six	which price range are looking for
+7 in a moderate price range please	ok let me look into some options for you
+8 <SILENCE>	api_call korean tokyo six moderate
+
+1 hi	hello what can i help you with today
+2 can you make a restaurant reservation in beijing with cantonese food for six people in a cheap price range	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call cantonese beijing six cheap
+
+1 hello	hello what can i help you with today
+2 can you make a restaurant reservation with vietnamese food in hanoi	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 for two people please	which price range are looking for
+5 in a cheap price range please	ok let me look into some options for you
+6 <SILENCE>	api_call vietnamese hanoi two cheap
+
+1 hi	hello what can i help you with today
+2 can you make a restaurant reservation	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with cantonese cuisine	where should it be
+5 in seoul	how many people would be in your party
+6 for eight people please	which price range are looking for
+7 i am looking for a expensive restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call cantonese seoul eight expensive
+
+1 hi	hello what can i help you with today
+2 may i have a table in a cheap price range with vietnamese food in hanoi	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 we will be four	ok let me look into some options for you
+5 <SILENCE>	api_call vietnamese hanoi four cheap
+
+1 hi	hello what can i help you with today
+2 can you book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love korean food	where should it be
+5 in hanoi	how many people would be in your party
+6 for eight please	which price range are looking for
+7 i am looking for a cheap restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call korean hanoi eight cheap
+
+1 good morning	hello what can i help you with today
+2 i'd like to book a table with korean cuisine for eight	i'm on it
+3 <SILENCE>	where should it be
+4 seoul please	which price range are looking for
+5 in a moderate price range please	ok let me look into some options for you
+6 <SILENCE>	api_call korean seoul eight moderate
+
+1 hello	hello what can i help you with today
+2 may i have a table with thai cuisine for two people in beijing in a cheap price range	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call thai beijing two cheap
+
+1 hello	hello what can i help you with today
+2 can you make a restaurant reservation	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese cuisine	where should it be
+5 hanoi please	how many people would be in your party
+6 for six people please	which price range are looking for
+7 i am looking for a cheap restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call vietnamese hanoi six cheap
+
+1 hello	hello what can i help you with today
+2 i'd like to book a table in bangkok	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese cuisine	how many people would be in your party
+5 for two please	which price range are looking for
+6 i am looking for a cheap restaurant	ok let me look into some options for you
+7 <SILENCE>	api_call vietnamese bangkok two cheap
+
+1 good morning	hello what can i help you with today
+2 can you book a table with korean cuisine in beijing	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 for eight please	which price range are looking for
+5 i am looking for a expensive restaurant	ok let me look into some options for you
+6 <SILENCE>	api_call korean beijing eight expensive
+
+1 hi	hello what can i help you with today
+2 may i have a table in seoul	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with thai cuisine	how many people would be in your party
+5 we will be six	which price range are looking for
+6 i am looking for a expensive restaurant	ok let me look into some options for you
+7 <SILENCE>	api_call thai seoul six expensive
+
+1 good morning	hello what can i help you with today
+2 i'd like to book a table in hanoi with vietnamese food in a moderate price range for four	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call vietnamese hanoi four moderate
+
+1 hello	hello what can i help you with today
+2 can you make a restaurant reservation in a expensive price range in beijing for six people with thai cuisine	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call thai beijing six expensive
+
+1 hello	hello what can i help you with today
+2 can you make a restaurant reservation	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean food	where should it be
+5 seoul please	how many people would be in your party
+6 for two please	which price range are looking for
+7 in a expensive price range please	ok let me look into some options for you
+8 <SILENCE>	api_call korean seoul two expensive
+
+1 hi	hello what can i help you with today
+2 can you book a table in a moderate price range with cantonese food for eight in tokyo	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call cantonese tokyo eight moderate
+
+1 hello	hello what can i help you with today
+2 i'd like to book a table for six with thai cuisine	i'm on it
+3 <SILENCE>	where should it be
+4 in hanoi	which price range are looking for
+5 in a moderate price range please	ok let me look into some options for you
+6 <SILENCE>	api_call thai hanoi six moderate
+
+1 hello	hello what can i help you with today
+2 can you book a table in seoul with cantonese food for six people	i'm on it
+3 <SILENCE>	which price range are looking for
+4 i am looking for a expensive restaurant	ok let me look into some options for you
+5 <SILENCE>	api_call cantonese seoul six expensive
+
+1 hello	hello what can i help you with today
+2 may i have a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love cantonese food	where should it be
+5 in bangkok	how many people would be in your party
+6 we will be four	which price range are looking for
+7 i am looking for a cheap restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call cantonese bangkok four cheap
+
+1 good morning	hello what can i help you with today
+2 may i have a table for eight in seoul	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love korean food	which price range are looking for
+5 in a moderate price range please	ok let me look into some options for you
+6 <SILENCE>	api_call korean seoul eight moderate
+
+1 hi	hello what can i help you with today
+2 can you book a table in tokyo in a moderate price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love japanese food	how many people would be in your party
+5 for four please	ok let me look into some options for you
+6 <SILENCE>	api_call japanese tokyo four moderate
+
+1 hello	hello what can i help you with today
+2 may i have a table in tokyo	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love japanese food	how many people would be in your party
+5 for four please	which price range are looking for
+6 in a cheap price range please	ok let me look into some options for you
+7 <SILENCE>	api_call japanese tokyo four cheap
+
+1 good morning	hello what can i help you with today
+2 can you book a table with vietnamese food for four people	i'm on it
+3 <SILENCE>	where should it be
+4 in tokyo	which price range are looking for
+5 in a expensive price range please	ok let me look into some options for you
+6 <SILENCE>	api_call vietnamese tokyo four expensive
+
+1 hi	hello what can i help you with today
+2 may i have a table in hanoi in a expensive price range with korean food	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 we will be six	ok let me look into some options for you
+5 <SILENCE>	api_call korean hanoi six expensive
+
+1 hello	hello what can i help you with today
+2 can you book a table in seoul	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love thai food	how many people would be in your party
+5 for six people please	which price range are looking for
+6 i am looking for a expensive restaurant	ok let me look into some options for you
+7 <SILENCE>	api_call thai seoul six expensive
+
+1 hi	hello what can i help you with today
+2 may i have a table in a expensive price range for six in bangkok with cantonese food	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call cantonese bangkok six expensive
+
+1 hi	hello what can i help you with today
+2 i'd like to book a table with japanese cuisine in a moderate price range for four	i'm on it
+3 <SILENCE>	where should it be
+4 tokyo please	ok let me look into some options for you
+5 <SILENCE>	api_call japanese tokyo four moderate
+
+1 hello	hello what can i help you with today
+2 may i have a table in bangkok for four people	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean cuisine	which price range are looking for
+5 i am looking for a moderate restaurant	ok let me look into some options for you
+6 <SILENCE>	api_call korean bangkok four moderate
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation in hanoi	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love korean food	how many people would be in your party
+5 we will be six	which price range are looking for
+6 in a moderate price range please	ok let me look into some options for you
+7 <SILENCE>	api_call korean hanoi six moderate
+
+1 hello	hello what can i help you with today
+2 i'd like to book a table for six in a moderate price range in beijing	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese cuisine	ok let me look into some options for you
+5 <SILENCE>	api_call vietnamese beijing six moderate
+
+1 hi	hello what can i help you with today
+2 may i have a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean food	where should it be
+5 seoul please	how many people would be in your party
+6 for two people please	which price range are looking for
+7 in a expensive price range please	ok let me look into some options for you
+8 <SILENCE>	api_call korean seoul two expensive
+
+1 good morning	hello what can i help you with today
+2 i'd like to book a table for eight people in beijing in a cheap price range with vietnamese food	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call vietnamese beijing eight cheap
+
+1 hi	hello what can i help you with today
+2 i'd like to book a table in tokyo for four in a expensive price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with cantonese cuisine	ok let me look into some options for you
+5 <SILENCE>	api_call cantonese tokyo four expensive
+
+1 hello	hello what can i help you with today
+2 can you book a table with korean cuisine for eight people	i'm on it
+3 <SILENCE>	where should it be
+4 hanoi please	which price range are looking for
+5 i am looking for a moderate restaurant	ok let me look into some options for you
+6 <SILENCE>	api_call korean hanoi eight moderate
+
+1 hi	hello what can i help you with today
+2 can you book a table in a moderate price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese food	where should it be
+5 in bangkok	how many people would be in your party
+6 we will be four	ok let me look into some options for you
+7 <SILENCE>	api_call vietnamese bangkok four moderate
+
+1 good morning	hello what can i help you with today
+2 may i have a table in bangkok with japanese cuisine	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 for four please	which price range are looking for
+5 i am looking for a expensive restaurant	ok let me look into some options for you
+6 <SILENCE>	api_call japanese bangkok four expensive
+
+1 hi	hello what can i help you with today
+2 can you book a table for two	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean cuisine	where should it be
+5 seoul please	which price range are looking for
+6 i am looking for a expensive restaurant	ok let me look into some options for you
+7 <SILENCE>	api_call korean seoul two expensive
+
+1 hello	hello what can i help you with today
+2 can you book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese food	where should it be
+5 in hanoi	how many people would be in your party
+6 we will be eight	which price range are looking for
+7 i am looking for a cheap restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call vietnamese hanoi eight cheap
+
+1 hello	hello what can i help you with today
+2 can you book a table for two people	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love cantonese food	where should it be
+5 in beijing	which price range are looking for
+6 i am looking for a cheap restaurant	ok let me look into some options for you
+7 <SILENCE>	api_call cantonese beijing two cheap
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with cantonese cuisine	where should it be
+5 in bangkok	how many people would be in your party
+6 for four please	which price range are looking for
+7 i am looking for a cheap restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call cantonese bangkok four cheap
+
+1 hi	hello what can i help you with today
+2 i'd like to book a table in a expensive price range in beijing for eight	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean cuisine	ok let me look into some options for you
+5 <SILENCE>	api_call korean beijing eight expensive
+
+1 hello	hello what can i help you with today
+2 i'd like to book a table for four people in tokyo with thai food	i'm on it
+3 <SILENCE>	which price range are looking for
+4 i am looking for a moderate restaurant	ok let me look into some options for you
+5 <SILENCE>	api_call thai tokyo four moderate
+
+1 hello	hello what can i help you with today
+2 can you book a table in a cheap price range with vietnamese cuisine in seoul	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 for two please	ok let me look into some options for you
+5 <SILENCE>	api_call vietnamese seoul two cheap
+
+1 hello	hello what can i help you with today
+2 can you make a restaurant reservation	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with cantonese cuisine	where should it be
+5 in bangkok	how many people would be in your party
+6 for six please	which price range are looking for
+7 in a moderate price range please	ok let me look into some options for you
+8 <SILENCE>	api_call cantonese bangkok six moderate
+
+1 good morning	hello what can i help you with today
+2 can you book a table in a expensive price range with japanese food in bangkok for six people	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call japanese bangkok six expensive
+
+1 hello	hello what can i help you with today
+2 may i have a table with thai food	i'm on it
+3 <SILENCE>	where should it be
+4 tokyo please	how many people would be in your party
+5 we will be two	which price range are looking for
+6 in a expensive price range please	ok let me look into some options for you
+7 <SILENCE>	api_call thai tokyo two expensive
+
+1 hello	hello what can i help you with today
+2 can you book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese cuisine	where should it be
+5 in beijing	how many people would be in your party
+6 for eight people please	which price range are looking for
+7 in a cheap price range please	ok let me look into some options for you
+8 <SILENCE>	api_call vietnamese beijing eight cheap
+
+1 good morning	hello what can i help you with today
+2 may i have a table with cantonese food for eight in a cheap price range	i'm on it
+3 <SILENCE>	where should it be
+4 in beijing	ok let me look into some options for you
+5 <SILENCE>	api_call cantonese beijing eight cheap
+
+1 good morning	hello what can i help you with today
+2 can you book a table for six people in a expensive price range in bangkok with japanese food	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call japanese bangkok six expensive
+
+1 hello	hello what can i help you with today
+2 may i have a table for four in seoul with cantonese cuisine in a moderate price range	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call cantonese seoul four moderate
+
+1 hello	hello what can i help you with today
+2 may i have a table for two	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love thai food	where should it be
+5 beijing please	which price range are looking for
+6 in a cheap price range please	ok let me look into some options for you
+7 <SILENCE>	api_call thai beijing two cheap
+
+1 hi	hello what can i help you with today
+2 can you book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese cuisine	where should it be
+5 seoul please	how many people would be in your party
+6 for six people please	which price range are looking for
+7 in a cheap price range please	ok let me look into some options for you
+8 <SILENCE>	api_call vietnamese seoul six cheap
+
+1 good morning	hello what can i help you with today
+2 can you book a table in hanoi for eight people	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean food	which price range are looking for
+5 i am looking for a moderate restaurant	ok let me look into some options for you
+6 <SILENCE>	api_call korean hanoi eight moderate
+
+1 hi	hello what can i help you with today
+2 i'd like to book a table with korean cuisine in a expensive price range in beijing for eight people	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call korean beijing eight expensive
+
+1 good morning	hello what can i help you with today
+2 can you book a table with korean cuisine in beijing in a moderate price range	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 for eight please	ok let me look into some options for you
+5 <SILENCE>	api_call korean beijing eight moderate
+
+1 hello	hello what can i help you with today
+2 can you book a table in a cheap price range in hanoi	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese food	how many people would be in your party
+5 we will be four	ok let me look into some options for you
+6 <SILENCE>	api_call vietnamese hanoi four cheap
+
+1 hi	hello what can i help you with today
+2 can you make a restaurant reservation with korean food for six people in tokyo	i'm on it
+3 <SILENCE>	which price range are looking for
+4 i am looking for a expensive restaurant	ok let me look into some options for you
+5 <SILENCE>	api_call korean tokyo six expensive
+
+1 hello	hello what can i help you with today
+2 can you book a table in bangkok in a cheap price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese cuisine	how many people would be in your party
+5 we will be six	ok let me look into some options for you
+6 <SILENCE>	api_call vietnamese bangkok six cheap
+
+1 hi	hello what can i help you with today
+2 can you make a restaurant reservation for six in beijing	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with cantonese food	which price range are looking for
+5 in a cheap price range please	ok let me look into some options for you
+6 <SILENCE>	api_call cantonese beijing six cheap
+
+1 good morning	hello what can i help you with today
+2 may i have a table with korean food in a moderate price range in tokyo	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 we will be eight	ok let me look into some options for you
+5 <SILENCE>	api_call korean tokyo eight moderate
+
+1 hi	hello what can i help you with today
+2 can you book a table in a moderate price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love vietnamese food	where should it be
+5 in bangkok	how many people would be in your party
+6 we will be two	ok let me look into some options for you
+7 <SILENCE>	api_call vietnamese bangkok two moderate
+
+1 hello	hello what can i help you with today
+2 may i have a table in tokyo for two with thai cuisine	i'm on it
+3 <SILENCE>	which price range are looking for
+4 in a expensive price range please	ok let me look into some options for you
+5 <SILENCE>	api_call thai tokyo two expensive
+
+1 hello	hello what can i help you with today
+2 can you make a restaurant reservation for six people with japanese cuisine in seoul in a expensive price range	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call japanese seoul six expensive
+
+1 hello	hello what can i help you with today
+2 i'd like to book a table in a cheap price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean cuisine	where should it be
+5 in bangkok	how many people would be in your party
+6 for four people please	ok let me look into some options for you
+7 <SILENCE>	api_call korean bangkok four cheap
+
+1 hello	hello what can i help you with today
+2 i'd like to book a table in bangkok	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with japanese food	how many people would be in your party
+5 for four people please	which price range are looking for
+6 in a cheap price range please	ok let me look into some options for you
+7 <SILENCE>	api_call japanese bangkok four cheap
+
+1 good morning	hello what can i help you with today
+2 can you book a table in a cheap price range in bangkok	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with thai cuisine	how many people would be in your party
+5 for two please	ok let me look into some options for you
+6 <SILENCE>	api_call thai bangkok two cheap
+
+1 hi	hello what can i help you with today
+2 may i have a table in seoul for six	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean cuisine	which price range are looking for
+5 i am looking for a expensive restaurant	ok let me look into some options for you
+6 <SILENCE>	api_call korean seoul six expensive
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese cuisine	where should it be
+5 in beijing	how many people would be in your party
+6 for four people please	which price range are looking for
+7 in a moderate price range please	ok let me look into some options for you
+8 <SILENCE>	api_call vietnamese beijing four moderate
+
+1 good morning	hello what can i help you with today
+2 i'd like to book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean food	where should it be
+5 in beijing	how many people would be in your party
+6 we will be six	which price range are looking for
+7 i am looking for a moderate restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call korean beijing six moderate
+
+1 hi	hello what can i help you with today
+2 can you book a table with cantonese cuisine in seoul in a moderate price range	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 we will be four	ok let me look into some options for you
+5 <SILENCE>	api_call cantonese seoul four moderate
+
+1 hello	hello what can i help you with today
+2 i'd like to book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese cuisine	where should it be
+5 in tokyo	how many people would be in your party
+6 for two please	which price range are looking for
+7 i am looking for a expensive restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call vietnamese tokyo two expensive
+
+1 good morning	hello what can i help you with today
+2 may i have a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love cantonese food	where should it be
+5 in bangkok	how many people would be in your party
+6 for eight please	which price range are looking for
+7 in a cheap price range please	ok let me look into some options for you
+8 <SILENCE>	api_call cantonese bangkok eight cheap
+
+1 hi	hello what can i help you with today
+2 i'd like to book a table in tokyo for eight in a cheap price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with cantonese cuisine	ok let me look into some options for you
+5 <SILENCE>	api_call cantonese tokyo eight cheap
+
+1 hi	hello what can i help you with today
+2 may i have a table for six people in a moderate price range with cantonese cuisine	i'm on it
+3 <SILENCE>	where should it be
+4 in beijing	ok let me look into some options for you
+5 <SILENCE>	api_call cantonese beijing six moderate
+
+1 hello	hello what can i help you with today
+2 i'd like to book a table with japanese food in seoul	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 for four people please	which price range are looking for
+5 in a moderate price range please	ok let me look into some options for you
+6 <SILENCE>	api_call japanese seoul four moderate
+
+1 good morning	hello what can i help you with today
+2 i'd like to book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love thai food	where should it be
+5 beijing please	how many people would be in your party
+6 for six please	which price range are looking for
+7 in a expensive price range please	ok let me look into some options for you
+8 <SILENCE>	api_call thai beijing six expensive
+
+1 hi	hello what can i help you with today
+2 i'd like to book a table with thai cuisine in beijing for four	i'm on it
+3 <SILENCE>	which price range are looking for
+4 in a expensive price range please	ok let me look into some options for you
+5 <SILENCE>	api_call thai beijing four expensive
+
+1 hi	hello what can i help you with today
+2 i'd like to book a table in bangkok with japanese cuisine	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 we will be four	which price range are looking for
+5 i am looking for a expensive restaurant	ok let me look into some options for you
+6 <SILENCE>	api_call japanese bangkok four expensive
+
+1 hello	hello what can i help you with today
+2 i'd like to book a table in beijing for eight people in a moderate price range with korean cuisine	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call korean beijing eight moderate
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation for eight people in a expensive price range in hanoi	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese cuisine	ok let me look into some options for you
+5 <SILENCE>	api_call vietnamese hanoi eight expensive
+
+1 hello	hello what can i help you with today
+2 can you book a table in a moderate price range for two	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean cuisine	where should it be
+5 in bangkok	ok let me look into some options for you
+6 <SILENCE>	api_call korean bangkok two moderate
+
+1 good morning	hello what can i help you with today
+2 can you book a table with japanese cuisine for four people in hanoi	i'm on it
+3 <SILENCE>	which price range are looking for
+4 i am looking for a expensive restaurant	ok let me look into some options for you
+5 <SILENCE>	api_call japanese hanoi four expensive
+
+1 hi	hello what can i help you with today
+2 i'd like to book a table in a expensive price range for four	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with thai cuisine	where should it be
+5 in seoul	ok let me look into some options for you
+6 <SILENCE>	api_call thai seoul four expensive
+
+1 good morning	hello what can i help you with today
+2 can you book a table with korean cuisine in beijing	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 we will be four	which price range are looking for
+5 in a expensive price range please	ok let me look into some options for you
+6 <SILENCE>	api_call korean beijing four expensive
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation with cantonese food in a cheap price range in seoul	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 we will be four	ok let me look into some options for you
+5 <SILENCE>	api_call cantonese seoul four cheap
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation in a expensive price range for six people in seoul	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with cantonese food	ok let me look into some options for you
+5 <SILENCE>	api_call cantonese seoul six expensive
+
+1 hello	hello what can i help you with today
+2 may i have a table in beijing in a cheap price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with thai cuisine	how many people would be in your party
+5 for two please	ok let me look into some options for you
+6 <SILENCE>	api_call thai beijing two cheap
+
+1 hi	hello what can i help you with today
+2 may i have a table in a cheap price range in bangkok with japanese food for two	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call japanese bangkok two cheap
+
+1 good morning	hello what can i help you with today
+2 can you book a table in hanoi	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love thai food	how many people would be in your party
+5 for two people please	which price range are looking for
+6 in a expensive price range please	ok let me look into some options for you
+7 <SILENCE>	api_call thai hanoi two expensive
+
+1 hi	hello what can i help you with today
+2 i'd like to book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love japanese food	where should it be
+5 in beijing	how many people would be in your party
+6 for eight please	which price range are looking for
+7 i am looking for a moderate restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call japanese beijing eight moderate
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation for four people with korean cuisine	i'm on it
+3 <SILENCE>	where should it be
+4 hanoi please	which price range are looking for
+5 in a moderate price range please	ok let me look into some options for you
+6 <SILENCE>	api_call korean hanoi four moderate
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation in tokyo in a moderate price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with japanese food	how many people would be in your party
+5 for two please	ok let me look into some options for you
+6 <SILENCE>	api_call japanese tokyo two moderate
+
+1 hello	hello what can i help you with today
+2 can you book a table with japanese cuisine	i'm on it
+3 <SILENCE>	where should it be
+4 in seoul	how many people would be in your party
+5 we will be four	which price range are looking for
+6 in a expensive price range please	ok let me look into some options for you
+7 <SILENCE>	api_call japanese seoul four expensive
+
+1 hi	hello what can i help you with today
+2 may i have a table for six in a expensive price range with vietnamese cuisine in hanoi	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call vietnamese hanoi six expensive
+
+1 hello	hello what can i help you with today
+2 i'd like to book a table in a expensive price range for four people with thai food in seoul	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call thai seoul four expensive
+
+1 hi	hello what can i help you with today
+2 can you book a table in bangkok for two with vietnamese cuisine	i'm on it
+3 <SILENCE>	which price range are looking for
+4 in a moderate price range please	ok let me look into some options for you
+5 <SILENCE>	api_call vietnamese bangkok two moderate
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with thai food	where should it be
+5 in beijing	how many people would be in your party
+6 we will be six	which price range are looking for
+7 in a moderate price range please	ok let me look into some options for you
+8 <SILENCE>	api_call thai beijing six moderate
+
+1 hi	hello what can i help you with today
+2 can you make a restaurant reservation for eight in hanoi in a expensive price range with thai cuisine	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call thai hanoi eight expensive
+
+1 hello	hello what can i help you with today
+2 can you book a table for eight people in a expensive price range in hanoi	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with cantonese food	ok let me look into some options for you
+5 <SILENCE>	api_call cantonese hanoi eight expensive
+
+1 hi	hello what can i help you with today
+2 can you book a table for six people with cantonese food in bangkok	i'm on it
+3 <SILENCE>	which price range are looking for
+4 i am looking for a expensive restaurant	ok let me look into some options for you
+5 <SILENCE>	api_call cantonese bangkok six expensive
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation in a moderate price range for four people	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love japanese food	where should it be
+5 seoul please	ok let me look into some options for you
+6 <SILENCE>	api_call japanese seoul four moderate
+
+1 hello	hello what can i help you with today
+2 can you make a restaurant reservation in a moderate price range for four people	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love korean food	where should it be
+5 in beijing	ok let me look into some options for you
+6 <SILENCE>	api_call korean beijing four moderate
+
+1 good morning	hello what can i help you with today
+2 i'd like to book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean cuisine	where should it be
+5 in beijing	how many people would be in your party
+6 we will be six	which price range are looking for
+7 in a cheap price range please	ok let me look into some options for you
+8 <SILENCE>	api_call korean beijing six cheap
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation in a expensive price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with cantonese cuisine	where should it be
+5 hanoi please	how many people would be in your party
+6 for eight please	ok let me look into some options for you
+7 <SILENCE>	api_call cantonese hanoi eight expensive
+
+1 hi	hello what can i help you with today
+2 can you book a table in a expensive price range in tokyo for four with thai food	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call thai tokyo four expensive
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation in hanoi for four in a cheap price range with korean food	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call korean hanoi four cheap
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese food	where should it be
+5 in seoul	how many people would be in your party
+6 we will be two	which price range are looking for
+7 i am looking for a expensive restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call vietnamese seoul two expensive
+
+1 hi	hello what can i help you with today
+2 can you book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean food	where should it be
+5 in beijing	how many people would be in your party
+6 we will be six	which price range are looking for
+7 i am looking for a moderate restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call korean beijing six moderate
+
+1 good morning	hello what can i help you with today
+2 i'd like to book a table in hanoi for two	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love thai food	which price range are looking for
+5 i am looking for a cheap restaurant	ok let me look into some options for you
+6 <SILENCE>	api_call thai hanoi two cheap
+
+1 hello	hello what can i help you with today
+2 i'd like to book a table for four with vietnamese cuisine in seoul	i'm on it
+3 <SILENCE>	which price range are looking for
+4 in a expensive price range please	ok let me look into some options for you
+5 <SILENCE>	api_call vietnamese seoul four expensive
+
+1 hello	hello what can i help you with today
+2 can you book a table with japanese cuisine in a expensive price range in tokyo	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 for eight please	ok let me look into some options for you
+5 <SILENCE>	api_call japanese tokyo eight expensive
+
+1 hello	hello what can i help you with today
+2 can you book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese cuisine	where should it be
+5 in hanoi	how many people would be in your party
+6 for two please	which price range are looking for
+7 i am looking for a cheap restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call vietnamese hanoi two cheap
+
+1 hello	hello what can i help you with today
+2 may i have a table in a moderate price range for two people	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love vietnamese food	where should it be
+5 in bangkok	ok let me look into some options for you
+6 <SILENCE>	api_call vietnamese bangkok two moderate
+
+1 hello	hello what can i help you with today
+2 can you make a restaurant reservation with thai food in a moderate price range in seoul for two people	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call thai seoul two moderate
+
+1 hi	hello what can i help you with today
+2 can you book a table in hanoi with thai food	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 for two please	which price range are looking for
+5 i am looking for a expensive restaurant	ok let me look into some options for you
+6 <SILENCE>	api_call thai hanoi two expensive
+
+1 hello	hello what can i help you with today
+2 can you make a restaurant reservation with cantonese food for eight in a expensive price range in seoul	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call cantonese seoul eight expensive
+
+1 hi	hello what can i help you with today
+2 can you book a table in seoul with cantonese cuisine	i'm on it
+3 <SILENCE>	how many people would be in your party
+4 for two please	which price range are looking for
+5 in a cheap price range please	ok let me look into some options for you
+6 <SILENCE>	api_call cantonese seoul two cheap
+
+1 good morning	hello what can i help you with today
+2 can you book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean food	where should it be
+5 in hanoi	how many people would be in your party
+6 for eight please	which price range are looking for
+7 in a moderate price range please	ok let me look into some options for you
+8 <SILENCE>	api_call korean hanoi eight moderate
+
+1 hi	hello what can i help you with today
+2 may i have a table with thai food	i'm on it
+3 <SILENCE>	where should it be
+4 in tokyo	how many people would be in your party
+5 we will be six	which price range are looking for
+6 in a expensive price range please	ok let me look into some options for you
+7 <SILENCE>	api_call thai tokyo six expensive
+
+1 hi	hello what can i help you with today
+2 may i have a table with cantonese food in a cheap price range in beijing for six people	i'm on it
+3 <SILENCE>	ok let me look into some options for you
+4 <SILENCE>	api_call cantonese beijing six cheap
+
+1 hello	hello what can i help you with today
+2 may i have a table with japanese cuisine for four people in a cheap price range	i'm on it
+3 <SILENCE>	where should it be
+4 beijing please	ok let me look into some options for you
+5 <SILENCE>	api_call japanese beijing four cheap
+
+1 hi	hello what can i help you with today
+2 can you make a restaurant reservation	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with japanese cuisine	where should it be
+5 in beijing	how many people would be in your party
+6 for six please	which price range are looking for
+7 in a moderate price range please	ok let me look into some options for you
+8 <SILENCE>	api_call japanese beijing six moderate
+
+1 good morning	hello what can i help you with today
+2 i'd like to book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love korean food	where should it be
+5 in seoul	how many people would be in your party
+6 for two people please	which price range are looking for
+7 i am looking for a expensive restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call korean seoul two expensive
+
+1 hi	hello what can i help you with today
+2 i'd like to book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with vietnamese food	where should it be
+5 tokyo please	how many people would be in your party
+6 for four please	which price range are looking for
+7 in a expensive price range please	ok let me look into some options for you
+8 <SILENCE>	api_call vietnamese tokyo four expensive
+
+1 hi	hello what can i help you with today
+2 can you book a table in a cheap price range for eight	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with cantonese food	where should it be
+5 in tokyo	ok let me look into some options for you
+6 <SILENCE>	api_call cantonese tokyo eight cheap
+
+1 hi	hello what can i help you with today
+2 may i have a table for six people	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with cantonese cuisine	where should it be
+5 in bangkok	which price range are looking for
+6 i am looking for a moderate restaurant	ok let me look into some options for you
+7 <SILENCE>	api_call cantonese bangkok six moderate
+
+1 hello	hello what can i help you with today
+2 can you make a restaurant reservation in a expensive price range with vietnamese cuisine	i'm on it
+3 <SILENCE>	where should it be
+4 in beijing	how many people would be in your party
+5 for six people please	ok let me look into some options for you
+6 <SILENCE>	api_call vietnamese beijing six expensive
+
+1 hi	hello what can i help you with today
+2 i'd like to book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love thai food	where should it be
+5 seoul please	how many people would be in your party
+6 we will be six	which price range are looking for
+7 in a moderate price range please	ok let me look into some options for you
+8 <SILENCE>	api_call thai seoul six moderate
+
+1 hello	hello what can i help you with today
+2 can you book a table for two people in beijing in a cheap price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love vietnamese food	ok let me look into some options for you
+5 <SILENCE>	api_call vietnamese beijing two cheap
+
+1 good morning	hello what can i help you with today
+2 i'd like to book a table	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love korean food	where should it be
+5 in hanoi	how many people would be in your party
+6 for two please	which price range are looking for
+7 i am looking for a expensive restaurant	ok let me look into some options for you
+8 <SILENCE>	api_call korean hanoi two expensive
+
+1 good morning	hello what can i help you with today
+2 can you make a restaurant reservation in a expensive price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean cuisine	where should it be
+5 tokyo please	how many people would be in your party
+6 for six please	ok let me look into some options for you
+7 <SILENCE>	api_call korean tokyo six expensive
+
+1 hello	hello what can i help you with today
+2 can you book a table in hanoi	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 with korean cuisine	how many people would be in your party
+5 for four please	which price range are looking for
+6 i am looking for a moderate restaurant	ok let me look into some options for you
+7 <SILENCE>	api_call korean hanoi four moderate
+
+1 hello	hello what can i help you with today
+2 may i have a table in tokyo for two in a cheap price range	i'm on it
+3 <SILENCE>	any preference on a type of cuisine
+4 i love japanese food	ok let me look into some options for you
+5 <SILENCE>	api_call japanese tokyo two cheap

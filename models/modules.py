@@ -51,21 +51,22 @@ class ExternalKnowledge(nn.Module):
     def __init__(self, max_hops, vocab_size, embedding_dim, dropout):
         super().__init__()
         self.max_hops = max_hops
-        self.sigmoid = nn.Sigmoid()
+        self.embedding_dim = embedding_dim
         self.dropout = dropout
         self.dropout_layer = nn.Dropout(dropout)
         for hop in range(self.max_hops + 1):
             C = nn.Embedding(vocab_size, embedding_dim, padding_idx= PAD_token)
-            C.weight.data.normal_(0,0.01)
+            C.weight.data.normal_(0,0.1)
             self.add_module("C_{}".format(hop), C)
         self.C = AttrProxy(self, 'C_')
 
+        self.sigmoid = nn.Sigmoid()
         self.softmax = nn.Softmax(dim=1)
 
     def add2memory(self, embed, rnn_output, context_arr_lengths):  # 调试到这里
         for bi in range(embed.size(0)):
             start, end = 0, context_arr_lengths[bi]
-            embed[bi, start:end, :] = embed[bi, start:end, :] + rnn_output[bi, :context_arr_lengths[bi], :]
+            embed[bi, start:end, :] = embed[bi, start:end, :] + rnn_output[bi, :end, :]
         return embed
 
     def load_memory(self, story, context_arr_lengths, rnn_output, rnn_hidden):  #转载对话历史
@@ -90,7 +91,7 @@ class ExternalKnowledge(nn.Module):
                 embedding_C = self.add2memory(embedding_C, rnn_output, context_arr_lengths)
 
             prob_tmp = prob.unsqueeze(2).expand_as(embedding_C)
-            o_k = torch.sum(prob_tmp * embedding_C, 1)  # 注意力分布和下一跳的存储内容相乘得到此时的输出
+            o_k = torch.sum(prob_tmp * embedding_C, 1)  # 注意力分布和下一跳的存储内容相乘得到此时的输出 , 消除story_lenght
             query = query + o_k  # 第k+1层的输入等于第k层的输入与输出相加
 
             self.m_story.append(embedding_A)  # 保存第k个过程的矩阵
@@ -107,13 +108,14 @@ class ExternalKnowledge(nn.Module):
         Returns:
 
         '''
+
         query = rnn_hidden
 
         for hop in range(self.max_hops):
             m_A = self.m_story[hop]  # [batch_size, story_length, hidden_size]
             if not args['ablationG']:
                 m_A = m_A * global_ptr.unsqueeze(2).expand_as(m_A)
-            query_tmp = query.unsqueeze(1).expand_as(m_A)
+            query_tmp = query.unsqueeze(1).expand_as(m_A)  # 增加story_length维度
             prob_origin = torch.sum(query_tmp * m_A, 2)  # 消除hidden_size维度
             prob_soft = self.softmax(prob_origin)  # [batch_size, story_length]
 
@@ -135,19 +137,20 @@ class LocalMemory(nn.Module):
         self.word_map = word_map
         self.dropout_layer = nn.Dropout(dropout)
         self.num_vocab = word_map.n_words
-        self.sketch_rnn = nn.GRU(embedding_dim,embedding_dim,dropout=dropout)
+        self.sketch_rnn = nn.GRU(embedding_dim, embedding_dim, dropout=dropout)
         self.projector = nn.Linear(2*embedding_dim, embedding_dim)  # 默认num_layers=1
         self.C = shared_embed
+        self.relu = nn.ReLU()
 
     def forward(self, story_size, ext_know, global_ptr, story_length, max_target_length, batch_size, encoded_hidden,
                 evaluating, copy_list):
         record = _cuda(torch.ones(story_size[0], story_size[1]))  # [batch_size, story_length]
         # all_decoder_output_ptr输出的是局部指针，是针对当前对话来说的
-        all_decoder_output_ptr = _cuda(torch.zeros(max_target_length, batch_size, story_size[1]))
+        all_decoder_output_ptr = _cuda(torch.zeros(max_target_length, batch_size, story_size[1]))  # 针对当前对话
         # all_decoder_output_vocab 针对的是词汇表
-        all_decoder_output_vocab = _cuda(torch.zeros(max_target_length, batch_size, self.num_vocab))
+        all_decoder_output_vocab = _cuda(torch.zeros(max_target_length, batch_size, self.num_vocab))  # 针对词汇表
         decoder_input = _cuda(torch.LongTensor([SOS_token] * batch_size))  # 每次为同一个batch的样本生成一个单词
-        hidden_init = self.projector(encoded_hidden).unsqueeze(0)  # 对连接降维
+        hidden_init = self.relu(self.projector(encoded_hidden)).unsqueeze(0)  # 对连接降维, 为什么要添加relu
         decoded_fine, decoded_coarse = [], []
 
         # 使用sketch RNN逐字生成输出
@@ -156,11 +159,12 @@ class LocalMemory(nn.Module):
             if len(sketch_response.size()) == 2:
                 sketch_response = sketch_response.unsqueeze(0)
             _, hidden = self.sketch_rnn(sketch_response, hidden_init)  # [seq_len, batch_size, embedding_dim]
-            query = hidden[-1]  # [num_layers * num_directions, batch, embedding_dim]  我认为结果包含了各层的隐含态
+            query = hidden[0]  # [num_layers * num_directions, batch, embedding_dim]  我认为结果包含了各层的隐含态
             # p_vocab [batch_size, vocab_size]
-            p_vocab = self.softmax(hidden.squeeze(0).matmul(self.C.weight.transpose(1,0)))  #[vocab_size, embedding_dim]
-            _, top_p_vocab = p_vocab.data.topk(1)  # 获得上下文关注的词汇的序号
+            p_vocab = hidden.squeeze(0).matmul(self.C.weight.transpose(1,0))  # 这里添加softmax层导致效果变差
+            # p_vocab [vocab_size, embedding_dim]
             all_decoder_output_vocab[t] = p_vocab
+            _, top_p_vocab = p_vocab.data.topk(1)  # 获得上下文关注的词汇的序号，这是针对词汇表
 
             # 使用sketch rnn的最后隐含态查询EK得到注意力分布，也就是local pointer
             local_ptr, prob_soft = ext_know.forward(query, global_ptr)  # 如果不适用forward也可以达到同样效果吗
@@ -179,13 +183,12 @@ class LocalMemory(nn.Module):
                     if '@' in self.word_map.index2word[token]:  #'@R_cuisine','@R_location','@R_number','@R_price'
                         cw = 'UNK'  # 改为数值
                         for i in range(search_len):
-
-                            if top_p_soft[i][bi] < story_length[bi]-1:
-                                cw = copy_list[bi][top_p_soft[i][bi].item()]
+                            if top_p_soft[bi][i] < story_length[bi]-1:  # top_p_soft[i][bi] -> top_p_soft[:, i][bi]
+                                cw = copy_list[bi][top_p_soft[bi][i].item()]
                                 break
-                            tmp_f.append(cw)
+                        tmp_f.append(cw)  # 这个是放在循环外面
                         if args['record']:
-                            record[bi][top_p_soft[i][bi].item()] = 0  # copy_list中已经使用的部分清零
+                            record[bi][top_p_soft[bi][i].item()] = 0  # copy_list中已经使用的部分清零
                     else:
                         tmp_f.append(self.word_map.index2word[token])  # 如果不是那几个‘@’的话，则记录单词
                 decoded_fine.append(tmp_f)

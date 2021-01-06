@@ -43,6 +43,9 @@ class Dataset(torch.utils.data.Dataset):
         context_arr = self.data_seq[index]['context_arr']
         context_arr = self.change_word2id(context_arr, True)
 
+        conv_arr = self.data_seq[index]['conv_arr']
+        conv_arr = self.change_word2id(conv_arr, True)
+
         response = self.data_seq[index]['response']
         response = self.change_word2id(response, False)
 
@@ -106,13 +109,14 @@ class Dataset(torch.utils.data.Dataset):
 
             return padded_seqs, lengths
 
-        data.sort(key=lambda x: len(x['context_arr']), reverse=True)  # 暂时使用context_arr，而不是conv_arr
+        data.sort(key=lambda x: len(x['conv_arr']), reverse=True)  # 暂时使用context_arr，而不是conv_arr ,rnn的pack_padded_sequence要求
         item_info = {}
         for key in data[0].keys():  # 按照内容聚合
             item_info[key] = [d[key] for d in data]
 
         # merge sequences
         context_arr, context_arr_lengths = merge(item_info['context_arr'], is_triple = True)
+        conv_arr, conv_arr_lengths = merge(item_info['conv_arr'], is_triple = True)
         response, response_lengths = merge(item_info['response'], is_triple = False)
         sketch_response, sketch_response_lengths = merge(item_info['sketch_response'], is_triple = False)
 
@@ -136,6 +140,7 @@ class Dataset(torch.utils.data.Dataset):
 
         # additional plain information
         data_info['context_arr_lengths'] = context_arr_lengths
+        data_info['conv_arr_lengths'] = conv_arr_lengths
         data_info['response_lengths'] = response_lengths
         data_info['local_ptr_lengths'] = local_ptr_lengths
 

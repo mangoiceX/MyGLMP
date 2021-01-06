@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch
 from utils.config import *
 from models.modules import ContextRNN, ExternalKnowledge, LocalMemory
-from torch import optim
+from torch import optim, Tensor
 from utils.masked_cross_entropy import  masked_cross_entropy
 from utils.measures import moses_multi_bleu
 from tqdm import tqdm
@@ -58,7 +58,7 @@ class GLMP(nn.Module):
         self.decoder_optimizer = optim.Adam(self.decoder.parameters(), lr=self.lr)
 
         # 学习率调控
-        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.decoder_optimizer, mode='max', factor=0.5, patience=2, min_lr=0.0001, verbose=True)
+        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.decoder_optimizer, mode='max', factor=0.5, patience=1, min_lr=0.0001, verbose=True)
 
         # 重置损失参数
         if USE_CUDA:
@@ -88,17 +88,17 @@ class GLMP(nn.Module):
         # Encode and Decode
         max_target_length = self.max_resp_len  # decoder要根据最长长度来生成回答
         all_decoder_output_vocab, local_ptr, _, _, global_ptr = self.encode_and_decode(data, max_target_length, evaluating=False)
-
+        #all_decoder_output_vocab [10, 8, 116]  local_ptr [10 8 70] global_ptr [8 70]
         # Loss calculation and backpropagation
-        loss_g = self.criterion_bce(global_ptr, data['global_ptr'])
+        loss_g = self.criterion_bce(global_ptr, data['global_ptr'])  # 维度一致
         loss_v = masked_cross_entropy(
-            all_decoder_output_vocab,
-            data['sketch_response'],
+            all_decoder_output_vocab.transpose(1, 0).contiguous(),  # 前两个维度转化为[batch_size, max_target_length]
+            data['sketch_response'],  # [batch_size, max_target_length]
             data['response_lengths']
         )
         loss_l = masked_cross_entropy(
-            local_ptr,
-            data['local_ptr'],
+            local_ptr.transpose(1, 0).contiguous(),
+            data['local_ptr'],  # [batch_size, max_target_length]
             data['local_ptr_lengths']  # 这个没在data中添加
         )
 
@@ -128,10 +128,10 @@ class GLMP(nn.Module):
 
         story = data['context_arr']  # [8, 70, 4] 8是bsz, 70是一段对话的单词个数,4是每个词表示的维度
         # encoder_output [batch_size, story_length, hidden_size]  encoder_hidden [batch_size, hidden_size]
-        encoder_output, encoder_hidden = self.encoder.forward(story, data['context_arr_lengths'])
+        encoder_output, encoder_hidden = self.encoder.forward(data['conv_arr'], data['conv_arr_lengths'])
         # ek_readout [batch_size, hidden_size] global_ptr [batch_size, story_length]
         global_ptr, ek_readout = self.ext_know.load_memory(story, data['context_arr_lengths'], encoder_output, encoder_hidden)  # ek_readout是q k+1
-        sketch_init = torch.cat((encoder_hidden, ek_readout), dim=1)  # 暂时无法知道连接维度
+        sketch_init = torch.cat((encoder_hidden, ek_readout), dim=1)  # 连接hidden_size维度，然后通过一个全连接层降维
 
         # 通过四元组得到原始对话的单词列表
         copy_list = []

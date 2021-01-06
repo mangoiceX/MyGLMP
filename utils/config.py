@@ -39,7 +39,7 @@ parser.add_argument('-lr', '--learning_rate', help = 'Learning rate', type = flo
 parser.add_argument('-ln', '--layer_num', help = 'Layer Number', type = int)
 parser.add_argument('-dr', '--drop', help = 'dropout', type = float)
 parser.add_argument('-e', '--epochs', help = 'Epoch Number', type = int)
-parser.add_argument('-gd', '--grad_threshold', help = 'Gradient Threshold', type = float)
+parser.add_argument('-gd', '--grad_threshold', help = 'Gradient Threshold', type = float, default=10)
 parser.add_argument('-ep', '--eval_period', help = 'Evaluation period', type = int)
 parser.add_argument('-pt','--patience', help = 'Patience', type = int)
 parser.add_argument('-b','--batch_size', help='Batch_size', type = int)
