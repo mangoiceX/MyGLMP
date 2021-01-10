@@ -11,12 +11,11 @@ import torch.nn as nn
 from utils.config import *
 import torch
 from utils.utils_general import _cuda
-import copy
 
 
 class ContextRNN(nn.Module):
     def __init__(self, input_size, hidden_size, n_layers, dropout):
-        super().__init__()
+        super(ContextRNN, self).__init__()
         self.input_size = input_size  # 116 是词汇表的大小
         self.hidden_size = hidden_size
         self.n_layers = n_layers
@@ -37,9 +36,9 @@ class ContextRNN(nn.Module):
         embeddings = torch.sum(embeddings, 2)  # [batch_size, story_length, hidden_size]
         embeddings = self.dropout_layer(embeddings)  # 为什么要使用dropout
 
-        hidden_init = _cuda(torch.zeros(2*self.n_layers, input_seqs.size(1), self.hidden_size))  # [2, batch_size, hidden_size]隐含状态的初始值
+        hidden_init = _cuda(torch.zeros(2*self.n_layers, input_seqs.size(0), self.hidden_size))  # [2, batch_size, hidden_size]隐含状态的初始值
         if input_lengths:
-            embeddings = nn.utils.rnn.pack_padded_sequence(embeddings, input_lengths, batch_first=False)
+            embeddings = nn.utils.rnn.pack_padded_sequence(embeddings, input_lengths, batch_first=True)
         output, hidden = self.gru(embeddings, hidden_init)  # output [] hidden [2, batch_size, hidden_size]
         # outputs   (seq_len, batch, num_directions * hidden_size) hidden [2 8 128](num_layers * num_directions, batch, hidden_size)
 
@@ -53,7 +52,7 @@ class ContextRNN(nn.Module):
 
 class ExternalKnowledge(nn.Module):
     def __init__(self, max_hops, vocab_size, embedding_dim, dropout):
-        super().__init__()
+        super(ExternalKnowledge, self).__init__()
         self.max_hops = max_hops
         self.embedding_dim = embedding_dim
         self.dropout = dropout
@@ -92,7 +91,7 @@ class ExternalKnowledge(nn.Module):
             prob = self.softmax(prob_origin)  #[batch_size, story_length]
 
             #embedding_C = self.C[hop+1](story)
-            embedding_C = self.C[hop+1](story.contiguous().view(story_size[0], -1).long())
+            embedding_C = self.C[hop+1](story.contiguous().view(story_size[0], -1))
             embedding_C = embedding_C.view(story_size + (embedding_C.size(-1),))  # b * m * s * e
             embedding_C = torch.sum(embedding_C, 2)
             if not args['ablationH']:
@@ -139,7 +138,7 @@ class ExternalKnowledge(nn.Module):
 
 class LocalMemory(nn.Module):
     def __init__(self, shared_embed, max_hops, word_map, embedding_dim, dropout):
-        super().__init__()
+        super(LocalMemory, self).__init__()
         self.max_hops = max_hops
         self.softmax = nn.Softmax(dim=1)
         self.word_map = word_map
@@ -151,7 +150,7 @@ class LocalMemory(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, story_size, ext_know, global_ptr, story_length, max_target_length, batch_size, encoded_hidden,
-                evaluating, copy_list):
+                evaluating, copy_list, use_teacher_forcing, response_target):
         record = _cuda(torch.ones(story_size[0], story_size[1]))  # [batch_size, story_length]
         # all_decoder_output_ptr输出的是局部指针，是针对当前对话来说的
         all_decoder_output_ptr = _cuda(torch.zeros(max_target_length, batch_size, story_size[1]))  # 针对当前对话
@@ -169,7 +168,8 @@ class LocalMemory(nn.Module):
             _, hidden = self.sketch_rnn(sketch_response, hidden_init)  # [seq_len, batch_size, embedding_dim]
             query = hidden[0]  # [num_layers * num_directions, batch, embedding_dim]  我认为结果包含了各层的隐含态
             # p_vocab [batch_size, vocab_size]
-            p_vocab = hidden.squeeze(0).matmul(self.C.weight.transpose(1,0))  # 这里添加softmax层导致效果变差
+            #p_vocab = hidden.squeeze(0).matmul(self.C.weight.transpose(1,0))  # 这里添加softmax层导致效果变差
+            p_vocab = self.attend_vocab(self.C.weight, hidden.squeeze(0))
             # p_vocab [vocab_size, embedding_dim]
             all_decoder_output_vocab[t] = p_vocab
             _, top_p_vocab = p_vocab.data.topk(1)  # 获得上下文关注的词汇的序号，这是针对词汇表
@@ -177,6 +177,11 @@ class LocalMemory(nn.Module):
             # 使用sketch rnn的最后隐含态查询EK得到注意力分布，也就是local pointer
             local_ptr, prob_soft = ext_know(query, global_ptr)  # 如果不适用forward也可以达到同样效果吗
             all_decoder_output_ptr[t] = local_ptr
+
+            if use_teacher_forcing:   # 需要添加这个，效果才会提升较多
+                decoder_input = response_target[:, t]
+            else:
+                decoder_input = top_p_vocab.squeeze()  # 使用这个来不断改变sketch_response，之前就是这里的问题
 
             if evaluating:
                 search_len = min(5, min(story_length))
@@ -204,6 +209,10 @@ class LocalMemory(nn.Module):
 
         return all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse
 
+    def attend_vocab(self, seq, cond):
+        scores_ = cond.matmul(seq.transpose(1,0))
+        #scores = F.softmax(scores_, dim=1)
+        return scores_
 
 class AttrProxy(object):
     def __init__(self, module, prefix):

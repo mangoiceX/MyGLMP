@@ -21,8 +21,8 @@ const = Const()
 
 UNK_token = 0
 PAD_token = 1
-SOS_token = 3
 EOS_token = 2
+SOS_token = 3
 
 if torch.cuda.is_available():
 #  if (os.cpu_count() > 8):   # 官方代码为什么这样弄不知道
@@ -46,6 +46,7 @@ parser.add_argument('-b','--batch_size', help='Batch_size', type = int)
 parser.add_argument('-abh', '--ablationH', type = bool, required = False, default = False)
 parser.add_argument('-abg', '--ablationG', type = bool, required = False, default = False)
 parser.add_argument('-rec','--record', help='use record function during inference', type=int, required=False, default=0)
+parser.add_argument('-tfr','--teacher_forcing_ratio', help='teacher_forcing_ratio', type=float, required=False, default=0.5)
 
 args = vars(parser.parse_args())
 

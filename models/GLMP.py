@@ -16,10 +16,11 @@ from utils.masked_cross_entropy import  masked_cross_entropy
 from utils.measures import moses_multi_bleu
 from tqdm import tqdm
 import numpy as np
+import random
 
 class GLMP(nn.Module):
     def __init__(self,hidden_size, word_map, max_resp_len, task, lr, n_layers, dropout, path=None):
-        super().__init__()
+        super(GLMP, self).__init__()
         self.name = "GLMP"
         self.input_size = word_map.n_words
         self.hidden_size = hidden_size
@@ -138,7 +139,7 @@ class GLMP(nn.Module):
         for each_context in data['context_arr_plain']:
             context = [word_triple[0] for word_triple in each_context]
             copy_list.append(context)
-
+        use_teacher_forcing = random.random() < args['teacher_forcing_ratio']
         all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse = self.decoder.forward(
             story.size(),
             self.ext_know,
@@ -148,7 +149,9 @@ class GLMP(nn.Module):
             args['batch_size'],
             sketch_init,  #
             evaluating,
-            copy_list
+            copy_list,
+            use_teacher_forcing,
+            data['sketch_response']
         )
 
         return all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse, global_ptr
@@ -170,7 +173,7 @@ class GLMP(nn.Module):
             for bi, word_fine in enumerate(decoded_fine):
                 response_fine = ''
                 for e in word_fine:
-                    if e ==  'EOS':
+                    if e == 'EOS':
                         break
                     response_fine += (e + ' ')
                 pred_sentence = response_fine.strip()

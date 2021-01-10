@@ -10,7 +10,7 @@
 
 
 from utils.config import *
-from data_loader.official_babi import prepare_data_seq  # data_Ent_babi
+# from data_loader.official_babi import prepare_data_seq  # data_Ent_babi
 from data_loader.data_Ent_babi import prepare_data
 from models.GLMP import GLMP
 from tqdm import tqdm
@@ -19,7 +19,7 @@ import math
 metrics_best, cnt = 0.0, 0
 
 # 转换数据
-train_loader, dev_loader, tst_loader, tst_oov_loader, word_map, max_resp_len = prepare_data_seq(args['task'],
+train_loader, dev_loader, tst_loader, tst_oov_loader, word_map, max_resp_len = prepare_data(args['task'],
                                                                                             args['batch_size'])
 model = GLMP(args['hidden_size'], word_map, max_resp_len, args['task'], args['learning_rate'],
              args['layer_num'], args['drop'])
