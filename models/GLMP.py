@@ -92,14 +92,14 @@ class GLMP(nn.Module):
         # Loss calculation and backpropagation
         loss_g = self.criterion_bce(global_ptr, data['global_ptr'])  # 维度一致
         loss_v = masked_cross_entropy(
-            all_decoder_output_vocab.transpose(1, 0).contiguous(),  # 前两个维度转化为[batch_size, max_target_length]
-            data['sketch_response'],  # [batch_size, max_target_length]
+            all_decoder_output_vocab.transpose(0, 1).contiguous(),  # 前两个维度转化为[batch_size, max_target_length]
+            data['sketch_response'].contiguous(),  # [batch_size, max_target_length]
             data['response_lengths']
         )
         loss_l = masked_cross_entropy(
-            local_ptr.transpose(1, 0).contiguous(),
-            data['local_ptr'],  # [batch_size, max_target_length]
-            data['local_ptr_lengths']  # 这个没在data中添加
+            local_ptr.transpose(0, 1).contiguous(),
+            data['local_ptr'].contiguous(),  # [batch_size, max_target_length]
+            data['response_lengths']  # 这个没在data中添加
         )
 
         loss = loss_g + loss_v + loss_l
@@ -130,7 +130,7 @@ class GLMP(nn.Module):
         # encoder_output [batch_size, story_length, hidden_size]  encoder_hidden [batch_size, hidden_size]
         encoder_output, encoder_hidden = self.encoder.forward(data['conv_arr'], data['conv_arr_lengths'])
         # ek_readout [batch_size, hidden_size] global_ptr [batch_size, story_length]
-        global_ptr, ek_readout = self.ext_know.load_memory(story, data['context_arr_lengths'], encoder_output, encoder_hidden)  # ek_readout是q k+1
+        global_ptr, ek_readout = self.ext_know.load_memory(story, data['conv_arr_lengths'], encoder_output, encoder_hidden)  # ek_readout是q k+1
         sketch_init = torch.cat((encoder_hidden, ek_readout), dim=1)  # 连接hidden_size维度，然后通过一个全连接层降维
 
         # 通过四元组得到原始对话的单词列表

@@ -31,7 +31,7 @@ def read_file(file_train, type_dict, entity_list):
     context_arr, data = [], []
     max_resp_len = 0
     with open(file_train, 'r') as f:
-        cnt_line = -1
+        cnt_line = 1
         for line in f.readlines():
 
             line = line.strip()
@@ -64,8 +64,8 @@ def read_file(file_train, type_dict, entity_list):
                     sketch_response = generate_sketch_response(response, entity_list, type_dict)
 
                     data_details = {
-                        'context_arr': context_arr + [['$$$$'] * MEM_TOKEN_SIZE],  # 为什么后面要追加NULL表示符号？
-                        'conv_arr': context_arr,
+                        'context_arr': list(context_arr + [['$$$$'] * MEM_TOKEN_SIZE]),  # 为什么后面要追加NULL表示符号？
+                        'conv_arr': list(context_arr),  # 要使用list进行转换，否则下面的context_arr改变，这个也会跟着改变
                         'response': response,
                         "local_ptr": local_ptr + [len(context_arr)],
                         'global_ptr': global_ptr,
@@ -83,7 +83,6 @@ def read_file(file_train, type_dict, entity_list):
             else:
                 cnt_line += 1
                 context_arr = []
-
     return data, max_resp_len
 
 

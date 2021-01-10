@@ -11,6 +11,7 @@ import torch.nn as nn
 from utils.config import *
 import torch
 from utils.utils_general import _cuda
+import copy
 
 
 class ContextRNN(nn.Module):
@@ -29,13 +30,16 @@ class ContextRNN(nn.Module):
         self.W = nn.Linear(2*self.hidden_size, self.hidden_size)
 
     def forward(self, input_seqs, input_lengths):  # input_lengths是该batch中，每个故事的长度
-        embeddings = self.embedding(input_seqs)   # [batch_size, story_length, MEM_TOKEN_SIZE, hidden_size]
+        #embeddings = self.embedding(input_seqs)   # [batch_size, story_length, MEM_TOKEN_SIZE, hidden_size]
+        # 保持batch_size维度不变，另外两个维度合并，然后在embedding
+        embeddings = self.embedding(input_seqs.contiguous().view(input_seqs.size(0), -1).long())
+        embeddings = embeddings.view(input_seqs.size() + (embeddings.size(-1),))
         embeddings = torch.sum(embeddings, 2)  # [batch_size, story_length, hidden_size]
         embeddings = self.dropout_layer(embeddings)  # 为什么要使用dropout
 
-        hidden_init = _cuda(torch.zeros(2*self.n_layers, input_seqs.size(0), self.hidden_size))  # [2, batch_size, hidden_size]隐含状态的初始值
+        hidden_init = _cuda(torch.zeros(2*self.n_layers, input_seqs.size(1), self.hidden_size))  # [2, batch_size, hidden_size]隐含状态的初始值
         if input_lengths:
-            embeddings = nn.utils.rnn.pack_padded_sequence(embeddings, input_lengths, batch_first=True)
+            embeddings = nn.utils.rnn.pack_padded_sequence(embeddings, input_lengths, batch_first=False)
         output, hidden = self.gru(embeddings, hidden_init)  # output [] hidden [2, batch_size, hidden_size]
         # outputs   (seq_len, batch, num_directions * hidden_size) hidden [2 8 128](num_layers * num_directions, batch, hidden_size)
 
@@ -55,43 +59,47 @@ class ExternalKnowledge(nn.Module):
         self.dropout = dropout
         self.dropout_layer = nn.Dropout(dropout)
         for hop in range(self.max_hops + 1):
-            C = nn.Embedding(vocab_size, embedding_dim, padding_idx= PAD_token)
-            C.weight.data.normal_(0,0.1)
+            C = nn.Embedding(vocab_size, embedding_dim, padding_idx=PAD_token)
+            C.weight.data.normal_(0, 0.1)
             self.add_module("C_{}".format(hop), C)
         self.C = AttrProxy(self, 'C_')
 
         self.sigmoid = nn.Sigmoid()
         self.softmax = nn.Softmax(dim=1)
 
-    def add2memory(self, embed, rnn_output, context_arr_lengths):  # 调试到这里
+    def add2memory(self, embed, rnn_output, conv_arr_lengths):  # 调试到这里
         for bi in range(embed.size(0)):
-            start, end = 0, context_arr_lengths[bi]
+            start, end = 0, conv_arr_lengths[bi]
             embed[bi, start:end, :] = embed[bi, start:end, :] + rnn_output[bi, :end, :]
         return embed
 
-    def load_memory(self, story, context_arr_lengths, rnn_output, rnn_hidden):  #转载对话历史
+    def load_memory(self, story, conv_arr_lengths, rnn_output, rnn_hidden):  #转载对话历史
         self.m_story = []
         query = rnn_hidden  # 语义转换 [batch_size, hidden_size]
+        story_size = story.size()
 
         for hop in range(self.max_hops):
-            embedding_A = self.C[hop](story)
+            #embedding_A = self.C[hop](story)
+            embedding_A = self.C[hop](story.contiguous().view(story_size[0], -1))  # 要转化为[batch_size, story_length*4]这样之后为什么会效果好些，是embed算法要求这样做的吗
+            embedding_A = embedding_A.view(story_size + (embedding_A.size(-1),))  # b * m * s * e
             embedding_A = torch.sum(embedding_A, 2)  # 合并用来表示每个词的维度-4  [batch_size,story_length,hidden_size]
-
             if not args['ablationH']:
-                embedding_A = self.add2memory(embedding_A, rnn_output, context_arr_lengths)
-            #embedding_A = self.dropout_layer(embedding_A)  # 为什么要添加dropout
+                embedding_A = self.add2memory(embedding_A, rnn_output, conv_arr_lengths)
+            embedding_A = self.dropout_layer(embedding_A)  # 为什么要添加dropout
 
             query_tmp = query.unsqueeze(1).expand_as(embedding_A)  # 需要对第二个维度进行拓展
-            prob_origin = torch.sum(query_tmp * embedding_A, 2)  # 查询向量和内存中的内容相乘计算出注意力分布
+            prob_origin = torch.sum(embedding_A*query_tmp, 2)  # 查询向量和内存中的内容相乘计算出注意力分布
             prob = self.softmax(prob_origin)  #[batch_size, story_length]
 
-            embedding_C = self.C[hop+1](story)
+            #embedding_C = self.C[hop+1](story)
+            embedding_C = self.C[hop+1](story.contiguous().view(story_size[0], -1).long())
+            embedding_C = embedding_C.view(story_size + (embedding_C.size(-1),))  # b * m * s * e
             embedding_C = torch.sum(embedding_C, 2)
             if not args['ablationH']:
-                embedding_C = self.add2memory(embedding_C, rnn_output, context_arr_lengths)
+                embedding_C = self.add2memory(embedding_C, rnn_output, conv_arr_lengths)
 
             prob_tmp = prob.unsqueeze(2).expand_as(embedding_C)
-            o_k = torch.sum(prob_tmp * embedding_C, 1)  # 注意力分布和下一跳的存储内容相乘得到此时的输出 , 消除story_lenght
+            o_k = torch.sum(embedding_C * prob_tmp, 1)  # 注意力分布和下一跳的存储内容相乘得到此时的输出 , 消除story_lenght
             query = query + o_k  # 第k+1层的输入等于第k层的输入与输出相加
 
             self.m_story.append(embedding_A)  # 保存第k个过程的矩阵
@@ -115,15 +123,15 @@ class ExternalKnowledge(nn.Module):
             m_A = self.m_story[hop]  # [batch_size, story_length, hidden_size]
             if not args['ablationG']:
                 m_A = m_A * global_ptr.unsqueeze(2).expand_as(m_A)
-            query_tmp = query.unsqueeze(1).expand_as(m_A)  # 增加story_length维度
-            prob_origin = torch.sum(query_tmp * m_A, 2)  # 消除hidden_size维度
+            query_tmp = query.unsqueeze(1).expand_as(m_A)  # 增加story_length维度, 会不会添加的数据有问题
+            prob_origin = torch.sum(m_A*query_tmp, 2)  # 消除hidden_size维度
             prob_soft = self.softmax(prob_origin)  # [batch_size, story_length]
 
             m_C = self.m_story[hop+1]
             if not args['ablationG']:
                 m_C = m_C * global_ptr.unsqueeze(2).expand_as(m_C)
             prob_tmp = prob_soft.unsqueeze(2).expand_as(m_C)
-            o_k = torch.sum(prob_tmp * m_C, 1)  # 消除story_length维度
+            o_k = torch.sum(m_C * prob_tmp, 1)  # 消除story_length维度
             query = query + o_k
 
         return prob_origin, prob_soft  # 注意力分布 输出分布
@@ -167,7 +175,7 @@ class LocalMemory(nn.Module):
             _, top_p_vocab = p_vocab.data.topk(1)  # 获得上下文关注的词汇的序号，这是针对词汇表
 
             # 使用sketch rnn的最后隐含态查询EK得到注意力分布，也就是local pointer
-            local_ptr, prob_soft = ext_know.forward(query, global_ptr)  # 如果不适用forward也可以达到同样效果吗
+            local_ptr, prob_soft = ext_know(query, global_ptr)  # 如果不适用forward也可以达到同样效果吗
             all_decoder_output_ptr[t] = local_ptr
 
             if evaluating:

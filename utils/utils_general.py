@@ -126,6 +126,7 @@ class Dataset(torch.utils.data.Dataset):
 
         # convert to contiguous and cuda
         context_arr = _cuda(context_arr.contiguous())
+        conv_arr = _cuda(conv_arr.contiguous())
         response = _cuda(response.contiguous())
         sketch_response = _cuda(sketch_response.contiguous())
         global_ptr = _cuda(global_ptr.contiguous())
