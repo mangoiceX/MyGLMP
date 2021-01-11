@@ -11,6 +11,7 @@ import torch.nn as nn
 from utils.config import *
 import torch
 from utils.utils_general import _cuda
+import torch.nn.functional as F
 
 
 class ContextRNN(nn.Module):
@@ -78,7 +79,7 @@ class ExternalKnowledge(nn.Module):
         story_size = story.size()
 
         for hop in range(self.max_hops):
-            #embedding_A = self.C[hop](story)
+            # embedding_A = self.C[hop](story)
             embedding_A = self.C[hop](story.contiguous().view(story_size[0], -1))  # 要转化为[batch_size, story_length*4]这样之后为什么会效果好些，是embed算法要求这样做的吗
             embedding_A = embedding_A.view(story_size + (embedding_A.size(-1),))  # b * m * s * e
             embedding_A = torch.sum(embedding_A, 2)  # 合并用来表示每个词的维度-4  [batch_size,story_length,hidden_size]
@@ -168,8 +169,9 @@ class LocalMemory(nn.Module):
             _, hidden = self.sketch_rnn(sketch_response, hidden_init)  # [seq_len, batch_size, embedding_dim]
             query = hidden[0]  # [num_layers * num_directions, batch, embedding_dim]  我认为结果包含了各层的隐含态
             # p_vocab [batch_size, vocab_size]
-            #p_vocab = hidden.squeeze(0).matmul(self.C.weight.transpose(1,0))  # 这里添加softmax层导致效果变差
-            p_vocab = self.attend_vocab(self.C.weight, hidden.squeeze(0))
+            # 论文对p_vocab进行了softmax操作，但是实际代码注释了，因为会使得效果变得比较差
+            p_vocab = hidden.squeeze(0).matmul(self.C.weight.transpose(1, 0))  # 这里添加softmax层导致效果变差
+            # p_vocab = self.attend_vocab(self.C.weight, hidden.squeeze(0))
             # p_vocab [vocab_size, embedding_dim]
             all_decoder_output_vocab[t] = p_vocab
             _, top_p_vocab = p_vocab.data.topk(1)  # 获得上下文关注的词汇的序号，这是针对词汇表
@@ -178,7 +180,7 @@ class LocalMemory(nn.Module):
             local_ptr, prob_soft = ext_know(query, global_ptr)  # 如果不适用forward也可以达到同样效果吗
             all_decoder_output_ptr[t] = local_ptr
 
-            if use_teacher_forcing:   # 需要添加这个，效果才会提升较多
+            if use_teacher_forcing:   # 使用了标签数据进行初始化，算不算数据泄露？
                 decoder_input = response_target[:, t]
             else:
                 decoder_input = top_p_vocab.squeeze()  # 使用这个来不断改变sketch_response，之前就是这里的问题
@@ -209,10 +211,11 @@ class LocalMemory(nn.Module):
 
         return all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse
 
-    def attend_vocab(self, seq, cond):
-        scores_ = cond.matmul(seq.transpose(1,0))
-        #scores = F.softmax(scores_, dim=1)
-        return scores_
+    # def attend_vocab(self, seq, cond):
+    #     scores_ = cond.matmul(seq.transpose(1,0))
+    #     # scores = F.softmax(scores_, dim=1)  # 添加softmax会让收敛变慢,并且效果变差很多
+    #     return scores_
+
 
 class AttrProxy(object):
     def __init__(self, module, prefix):
