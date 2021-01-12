@@ -164,9 +164,10 @@ class LocalMemory(nn.Module):
         # 使用sketch RNN逐字生成输出
         for t in range(max_target_length):
             sketch_response = self.dropout_layer(self.C(decoder_input))  #[8] -> [1,8,128] .
-            if len(sketch_response.size()) == 2:
+            if len(sketch_response.size()) == 1:  # batch_size==1的时候会出现维度只有一位的情况
                 sketch_response = sketch_response.unsqueeze(0)
-            _, hidden = self.sketch_rnn(sketch_response, hidden_init)  # [seq_len, batch_size, embedding_dim]
+            # 这里的seq_len为什么是1？
+            _, hidden = self.sketch_rnn(sketch_response.unsqueeze(0), hidden_init)  # [seq_len, batch_size, embedding_dim]
             query = hidden[0]  # [num_layers * num_directions, batch, embedding_dim]  我认为结果包含了各层的隐含态
             # p_vocab [batch_size, vocab_size]
             # 论文对p_vocab进行了softmax操作，但是实际代码注释了，因为会使得效果变得比较差

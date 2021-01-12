@@ -88,7 +88,7 @@ class GLMP(nn.Module):
         self.decoder_optimizer.zero_grad()
 
         # Encode and Decode
-        max_target_length = self.max_resp_len  # decoder要根据最长长度来生成回答
+        max_target_length = max(data['response_lengths'])  # decoder要根据最长长度来生成回答,应该是根据当前批次的最长回答长度，因为是根据这个生成同一长度的向量的
         all_decoder_output_vocab, local_ptr, _, _, global_ptr = self.encode_and_decode(data, max_target_length, evaluating=False)
         #all_decoder_output_vocab [10, 8, 116]  local_ptr [10 8 70] global_ptr [8 70]
         # Loss calculation and backpropagation
@@ -168,8 +168,9 @@ class GLMP(nn.Module):
         dialogue_acc_dict = defaultdict(list)
 
         for i, data_item in tqdm(enumerate(dev), total=len(dev)):
-            _, _, decoded_fine, decoded_coarse, global_ptr = self.encode_and_decode(data_item, self.max_resp_len,
-                                                                                    evaluating=True)
+            max_target_length = max(data_item['response_lengths'])
+            _, _, decoded_fine, decoded_coarse, global_ptr = self.encode_and_decode(data_item, max_target_length,
+                                                                                   evaluating=True)
             # decoded_fine是以一个batch的一个单词组成的列表为最内维度，所以倒置转化成行为一个完整的句子的预测疏输出
             decoded_fine, decoded_coarse = map(lambda x : np.transpose(np.array(x)), (decoded_fine, decoded_coarse))
             for bi, word_fine in enumerate(decoded_fine):
