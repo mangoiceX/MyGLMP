@@ -17,6 +17,7 @@ from utils.measures import moses_multi_bleu
 from tqdm import tqdm
 import numpy as np
 import random
+from collections import defaultdict
 
 class GLMP(nn.Module):
     def __init__(self,hidden_size, word_map, max_resp_len, task, lr, n_layers, dropout, path=None):
@@ -164,6 +165,7 @@ class GLMP(nn.Module):
 
         label, pred = [],[]
         acc, total = 0, 0
+        dialogue_acc_dict = defaultdict(list)
 
         for i, data_item in tqdm(enumerate(dev), total=len(dev)):
             _, _, decoded_fine, decoded_coarse, global_ptr = self.encode_and_decode(data_item, self.max_resp_len,
@@ -183,9 +185,18 @@ class GLMP(nn.Module):
 
                 if pred_sentence == label_sentence:
                     acc += 1
+                    dialogue_acc_dict[data_item['ID'][bi]].append(1)
+                else:
+                    dialogue_acc_dict[data_item['ID'][bi]].append(0)
                 total += 1
         acc_score = acc / float(total)
         print('ACC SCORE:\t{}'.format(acc_score))
+
+        dialogue_acc = 0
+        for key in dialogue_acc_dict:
+            if len(dialogue_acc_dict[key]) == sum(dialogue_acc_dict[key]):
+                dialogue_acc += 1
+        print("Dialog Accuracy:\t{}".format(dialogue_acc*1.0/len(dialogue_acc_dict)))
 
         self.encoder.train(True)
         self.ext_know.train(True)
