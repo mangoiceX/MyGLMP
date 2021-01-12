@@ -209,7 +209,6 @@ class LocalMemory(nn.Module):
                         tmp_f.append(self.word_map.index2word[token])  # 如果不是那几个‘@’的话，则记录单词
                 decoded_fine.append(tmp_f)
                 decoded_coarse.append(tmp_c)
-
         return all_decoder_output_vocab, all_decoder_output_ptr, decoded_fine, decoded_coarse
 
     # def attend_vocab(self, seq, cond):

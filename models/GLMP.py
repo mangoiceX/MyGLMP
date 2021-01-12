@@ -184,6 +184,14 @@ class GLMP(nn.Module):
                 label_sentence = data_item['response_plain'][bi].strip()  # 有一次bi会越界
                 label.append(label_sentence)
 
+                # 打印输出样例
+                # print('Context:')
+                # print(data_item['context_arr_plain'][bi])
+                # print('Predictive response:')
+                # print(pred_sentence)
+                # print('Label sentence:')
+                # print(label_sentence)
+
                 if pred_sentence == label_sentence:
                     acc += 1
                     dialogue_acc_dict[data_item['ID'][bi]].append(1)
