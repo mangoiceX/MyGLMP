@@ -47,6 +47,7 @@ parser.add_argument('-abh', '--ablationH', type = bool, required = False, defaul
 parser.add_argument('-abg', '--ablationG', type = bool, required = False, default = False)
 parser.add_argument('-rec','--record', help='use record function during inference', type=int, required=False, default=0)
 parser.add_argument('-tfr','--teacher_forcing_ratio', help='teacher_forcing_ratio', type=float, required=False, default=0.5)
+parser.add_argument('-gs', '--genSample', help='Generate Sample', required=False, default=0)
 
 args = vars(parser.parse_args())
 

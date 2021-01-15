@@ -68,6 +68,7 @@ class Dataset(torch.utils.data.Dataset):
         # 保存为编码的数据，模型评估时需要使用
         data_info['context_arr_plain'] = self.data_seq[index]['context_arr']
         data_info['response_plain'] = self.data_seq[index]['response']
+        data_info['kb_info_plain'] = self.data_seq[index]['kb_info']
 
         return data_info
 

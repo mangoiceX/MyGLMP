@@ -17,6 +17,7 @@ from utils.measures import moses_multi_bleu
 from tqdm import tqdm
 import numpy as np
 import random
+import json
 from collections import defaultdict
 
 class GLMP(nn.Module):
@@ -165,7 +166,25 @@ class GLMP(nn.Module):
 
         label, pred = [],[]
         acc, total = 0, 0
+        # kvr数据集的评价指标
+        F1_pred, F1_cal_pred, F1_nav_pred, F1_wet_pred = 0, 0, 0, 0
+        F1_count, F1_cal_count, F1_nav_count, F1_wet_count = 0, 0, 0, 0
+
         dialogue_acc_dict = defaultdict(list)
+
+        if args['dataset'] == 'kvr':
+            with open('../data/KVR/kvret_entities.json') as f:
+                global_entity = json.load(f)
+                global_entity_list = []
+                for key in global_entity:
+                    if key != 'poi':
+                        global_entity_list += [item.lower().replace(' ', '_') for item in global_entity[key]]
+                    else:
+                        for item in global_entity[key]:
+                            global_entity_list += [item[x].lower().replace(' ', '_') for x in item]
+                global_entity_list = list(set(global_entity_list))
+
+
 
         for i, data_item in tqdm(enumerate(dev), total=len(dev)):
             max_target_length = max(data_item['response_lengths'])
@@ -179,7 +198,14 @@ class GLMP(nn.Module):
                     if e == 'EOS':
                         break
                     response_fine += (e + ' ')
+                st_c = ''
+                for e in decoded_coarse[bi]:
+                    if e == 'EOS':
+                        break
+                    else:
+                        st_c += e + ' '
                 pred_sentence = response_fine.strip()
+                pred_sentence_coarse = st_c.strip()
                 pred.append(pred_sentence)
                 label_sentence = data_item['response_plain'][bi].strip()  # 有一次bi会越界
                 label.append(label_sentence)
@@ -191,27 +217,51 @@ class GLMP(nn.Module):
                 # print(pred_sentence)
                 # print('Label sentence:')
                 # print(label_sentence)
-
-                if pred_sentence == label_sentence:
-                    acc += 1
-                    dialogue_acc_dict[data_item['ID'][bi]].append(1)
+                if args['dataset'] == 'kvr':
+                    # compute F1 SCORE
+                    single_f1, count = self.compute_prf(data_item['ent_index'][bi], pred_sentence.split(), global_entity_list, data_item['kb_info_plain'][bi])
+                    F1_pred += single_f1
+                    F1_count += count
+                    single_f1, count = self.compute_prf(data_item['ent_idx_cal'][bi], pred_sentence.split(), global_entity_list, data_item['kb_info_plain'][bi])
+                    F1_cal_pred += single_f1
+                    F1_cal_count += count
+                    single_f1, count = self.compute_prf(data_item['ent_idx_nav'][bi], pred_sentence.split(), global_entity_list, data_item['kb_info_plain'][bi])
+                    F1_nav_pred += single_f1
+                    F1_nav_count += count
+                    single_f1, count = self.compute_prf(data_item['ent_idx_wet'][bi], pred_sentence.split(), global_entity_list, data_item['kb_info_plain'][bi])
+                    F1_wet_pred += single_f1
+                    F1_wet_count += count
                 else:
-                    dialogue_acc_dict[data_item['ID'][bi]].append(0)
+                    if pred_sentence == label_sentence:
+                        acc += 1
+                        dialogue_acc_dict[data_item['ID'][bi]].append(1)
+                    else:
+                        dialogue_acc_dict[data_item['ID'][bi]].append(0)
                 total += 1
-        acc_score = acc / float(total)
-        print('ACC SCORE:\t{}'.format(acc_score))
-
-        dialogue_acc = 0
-        for key in dialogue_acc_dict:
-            if len(dialogue_acc_dict[key]) == sum(dialogue_acc_dict[key]):
-                dialogue_acc += 1
-        print("Dialog Accuracy:\t{}".format(dialogue_acc*1.0/len(dialogue_acc_dict)))
+                if args['genSample']:
+                    self.print_examples(bi, data_item, pred_sentence, pred_sentence_coarse, label_sentence)
 
         self.encoder.train(True)
         self.ext_know.train(True)
         self.decoder.train(True)
 
+        acc_score = acc / float(total)
+        print('ACC SCORE:\t{}'.format(acc_score))
         bleu_score = moses_multi_bleu(np.array(pred), np.array(label), lowercase=True)  # 暂时无法使用
+
+        if args['dataset'] == 'kvr':
+            F1_score = F1_pred / float(F1_count)
+            print("F1 SCORE:\t{}".format(F1_pred / float(F1_count)))
+            print("\tCAL F1:\t{}".format(F1_cal_pred / float(F1_cal_count)))
+            print("\tWET F1:\t{}".format(F1_wet_pred / float(F1_wet_count)))
+            print("\tNAV F1:\t{}".format(F1_nav_pred / float(F1_nav_count)))
+            print("BLEU SCORE:\t" + str(bleu_score))
+        else:
+            dialogue_acc = 0
+            for key in dialogue_acc_dict:
+                if len(dialogue_acc_dict[key]) == sum(dialogue_acc_dict[key]):
+                    dialogue_acc += 1
+            print("Dialog Accuracy:\t{}".format(dialogue_acc*1.0/len(dialogue_acc_dict)))
 
         if early_stop == 'BLEU':
             if bleu_score >= metric_best:
@@ -224,6 +274,29 @@ class GLMP(nn.Module):
                 print('MODEL SAVED')
                 return acc_score
 
+
+    def compute_prf(self, gold, pred, global_entity_list, kb_plain):
+        local_kb_word = [k[0] for k in kb_plain]
+        TP, FP, FN = 0, 0, 0
+        if len(gold)!= 0:
+            count = 1
+            for g in gold:
+                if g in pred:
+                    TP += 1
+                else:
+                    FN += 1
+            for p in set(pred):
+                if p in global_entity_list or p in local_kb_word:
+                    if p not in gold:
+                        FP += 1
+            precision = TP / float(TP+FP) if (TP+FP)!=0 else 0
+            recall = TP / float(TP+FN) if (TP+FN)!=0 else 0
+            F1 = 2 * precision * recall / float(precision + recall) if (precision+recall)!=0 else 0
+        else:
+            precision, recall, F1, count = 0, 0, 0, 0
+        return F1, count
+
+
     def print_loss(self):
         print_loss_avg = self.loss / self.print_every
         print_loss_g = self.loss_g / self.print_every
@@ -234,6 +307,26 @@ class GLMP(nn.Module):
 
         return 'L:{:.2f},LG:{:.2f},LL:{:.2f},LV:{:.2f}'.format(print_loss_avg, print_loss_g, print_loss_l, print_loss_v)
 
+    def print_examples(self, batch_idx, data, pred_sent, pred_sent_coarse, gold_sent):
+        kb_len = len(data['context_arr_plain'][batch_idx])-data['conv_arr_lengths'][batch_idx]-1
+        print("{}: ID{} id{} ".format(data['domain'][batch_idx], data['ID'][batch_idx], data['id'][batch_idx]))
+        for i in range(kb_len):
+            kb_temp = [w for w in data['context_arr_plain'][batch_idx][i] if w!='PAD']
+            kb_temp = kb_temp[::-1]
+            if 'poi' not in kb_temp:
+                print(kb_temp)
+        flag_uttr, uttr = '$u', []
+        for word_idx, word_arr in enumerate(data['context_arr_plain'][batch_idx][kb_len:]):
+            if word_arr[1]==flag_uttr:
+                uttr.append(word_arr[0])
+            else:
+                print(flag_uttr,': ', " ".join(uttr))
+                flag_uttr = word_arr[1]
+                uttr = [word_arr[0]]
+        print('Sketch System Response : ', pred_sent_coarse)
+        print('Final System Response : ', pred_sent)
+        print('Gold System Response : ', gold_sent)
+        print('\n')
 
 
 

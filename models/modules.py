@@ -70,7 +70,7 @@ class ExternalKnowledge(nn.Module):
     def add2memory(self, embed, kb_len, rnn_output, conv_arr_lengths):  # 调试到这里
         for bi in range(embed.size(0)):
             start, end = kb_len[bi], kb_len[bi] + conv_arr_lengths[bi]
-            embed[bi, start:end, :] = embed[bi, start:end, :] + rnn_output[bi, :end, :]
+            embed[bi, start:end, :] = embed[bi, start:end, :] + rnn_output[bi, :conv_arr_lengths[bi], :]
         return embed
 
     def load_memory(self, story, conv_arr_lengths, kb_len, rnn_output, rnn_hidden):  #转载对话历史

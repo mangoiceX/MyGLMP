@@ -11,10 +11,14 @@
 
 from utils.config import *
 # from data_loader.official_babi import prepare_data_seq  # data_Ent_babi
-from data_loader.data_Ent_babi import prepare_data
 from models.GLMP import GLMP
 from tqdm import tqdm
 import math
+
+if args['dataset'] == 'kvr':
+    from data_loader.data_Ent_kvr import prepare_data
+else:
+    from data_loader.data_Ent_babi import prepare_data
 
 metrics_best, cnt = 0.0, 0
 

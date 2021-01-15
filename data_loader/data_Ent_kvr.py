@@ -14,7 +14,7 @@ import ast
 
 
 def read_file(file_train, entity_map):
-    context_arr, conv_arr, data = [], [], []
+    context_arr, conv_arr, kb_info, data = [], [], [], []
     max_resp_len = 0
     with open(file_train, 'r') as f:
         cnt_line = 1
@@ -22,8 +22,10 @@ def read_file(file_train, entity_map):
             line = line.strip()
             if line:
                 if '#' in line:
-                    line = line.replace('#','')
+                    line = line.replace('#', '')
                     task_type = line  # 判断是那种任务类型
+                    continue
+
                 turn_id, line = line.split(' ', 1)
                 if '\t' in line:
                     user_utterance, response, label_ent = line.split('\t')
@@ -53,13 +55,13 @@ def read_file(file_train, entity_map):
                             local_ptr.append(len(context_arr))
 
                     # 计算全局指针，统计上下文有没有在当前回答中出现
-                    global_ptr = [1 if triplet[0] in response.split() or triplet[0] in ent_index else 0 for triplet in context_arr] +  [
+                    global_ptr = [1 if (triplet[0] in response.split() or triplet[0] in ent_index) else 0 for triplet in context_arr] +  [
                         1]  # 最后为什么要+1
                     sketch_response = generate_sketch_response(response, entity_map, label_ent, kb_info, task_type)
 
                     data_details = {
                         'context_arr': list(context_arr + [['$$$$'] * MEM_TOKEN_SIZE]),  # 为什么后面要追加NULL表示符号？
-                        'conv_arr': list(context_arr),  # 要使用list进行转换，否则下面的context_arr改变，这个也会跟着改变
+                        'conv_arr': list(conv_arr),  # 要使用list进行转换，否则下面的context_arr改变，这个也会跟着改变
                         'response': response,
                         "local_ptr": local_ptr + [len(context_arr)],
                         'global_ptr': global_ptr,
@@ -78,8 +80,9 @@ def read_file(file_train, entity_map):
                     max_resp_len = max(max_resp_len, len(response.split()))  # 记录回答的最长长度
                 else:  # 表示这段话结束 #这里不知道是做什么
                     response = line
-                    kb_info = generate_memory(response, "", turn_id)
-                    context_arr = kb_info + context_arr  # conv_arr 没有添加知识
+                    kb_item = generate_memory(response, "", turn_id)
+                    context_arr = kb_item + context_arr  # conv_arr 没有添加知识
+                    kb_info += kb_item
             else:
                 cnt_line += 1
                 context_arr, conv_arr, kb_info = [], [], []
@@ -89,7 +92,7 @@ def read_file(file_train, entity_map):
 def generate_sketch_response(response, global_entity, label_ent, kb_info, task_type):
     # 对回答的每个单词生成@type的描述
     sketch_response = []
-    if label_ent:
+    if not label_ent:
         sketch_response = response.split()
     else:
         for word in response.split():
@@ -105,11 +108,12 @@ def generate_sketch_response(response, global_entity, label_ent, kb_info, task_t
                 if not entity_type:
                     for key in global_entity:
                         if key != 'poi':
+                            global_entity[key] = [x.lower() for x in global_entity[key]]
                             if word in global_entity[key] or word.replace('_', ' ') in global_entity[key]:
                                 entity_type = key
                                 break
                         else:
-                            poi_list = [d['poi'] for d in global_entity[key] ]
+                            poi_list = [d['poi'].lower() for d in global_entity[key]]
                             if word in poi_list or word.replace('_', ' ') in poi_list:
                                 entity_type = key
                                 break
@@ -131,10 +135,6 @@ def generate_memory(tokens, speaker, turn_id):
     return gen_content
 
 
-def get_seq():
-    pass
-
-
 def prepare_data(task, batch_size):
     """
     :param task:
@@ -151,10 +151,10 @@ def prepare_data(task, batch_size):
     # file_tst_oov = '{}/dialog-babi-task{}tst-OOV-small.txt'.format(data_path, task)
 
     # 大数据集测试
-    file_train = 'train.txt'.format(data_path)
-    file_dev = 'dev.txt'.format(data_path)
-    file_tst = 'test.txt'.format(data_path)
-    entities_path = 'kvret_entities.json'.format(data_path)
+    file_train = '{}train.txt'.format(data_path)
+    file_dev = '{}dev.txt'.format(data_path)
+    file_tst = '{}test.txt'.format(data_path)
+    entities_path = '{}kvret_entities.json'.format(data_path)
 
     with open(entities_path) as f:
         global_entity = json.load(f)
@@ -170,7 +170,15 @@ def prepare_data(task, batch_size):
     dev_loader = get_data_seq(dev_data, word_map, batch_size, first=False)
     tst_loader = get_data_seq(tst_data, word_map, batch_size, first=False)
 
+    print("Read %s sentence pairs train" % len(train_loader))
+    print("Read %s sentence pairs dev" % len(dev_loader))
+    print("Read %s sentence pairs test" % len(tst_loader))
+    print("Vocab_size: %s " % word_map.n_words)
+    print("Max. length of system response: %s " % max_resp_len)
+    print("USE_CUDA={}".format(USE_CUDA))
+
     return train_loader, dev_loader, tst_loader, [], word_map, max_resp_len
+
 
 if __name__ == '__main__':
 
