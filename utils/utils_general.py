@@ -122,6 +122,7 @@ class Dataset(torch.utils.data.Dataset):
         conv_arr, conv_arr_lengths = merge(item_info['conv_arr'], is_triple = True)
         response, response_lengths = merge(item_info['response'], is_triple = False)
         sketch_response, sketch_response_lengths = merge(item_info['sketch_response'], is_triple = False)
+        kb_info, kb_info_lengths = merge(item_info['kb_info'], is_triple = True)
 
         # merge id
         global_ptr, global_ptr_lengths = merge(item_info['global_ptr'], is_triple = False, pad_zeros = True)
@@ -134,6 +135,7 @@ class Dataset(torch.utils.data.Dataset):
         sketch_response = _cuda(sketch_response.contiguous())
         global_ptr = _cuda(global_ptr.contiguous())
         local_ptr = _cuda(local_ptr.contiguous())
+        if (len(list(kb_info.size())) > 1): kb_arr = _cuda(kb_info.transpose(0, 1).contiguous())
 
         data_info = {}
         for key in item_info.keys():
@@ -145,6 +147,7 @@ class Dataset(torch.utils.data.Dataset):
         # additional plain information
         data_info['context_arr_lengths'] = context_arr_lengths
         data_info['conv_arr_lengths'] = conv_arr_lengths
+        data_info['kb_info_lengths'] = kb_info_lengths
         data_info['response_lengths'] = response_lengths
         data_info['local_ptr_lengths'] = local_ptr_lengths
 
