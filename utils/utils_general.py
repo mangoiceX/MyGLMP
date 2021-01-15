@@ -104,11 +104,8 @@ class Dataset(torch.utils.data.Dataset):
             for i, seq in enumerate(sequences):
                 end = lengths[i]
                 seq = torch.Tensor(seq)
-                try:
+                if len(seq) != 0:  # 异常处理空的kb_info
                     padded_seqs[i, :end] = seq[:end]  # seq是[[],[]]的新式，也就是一份data_details的数据
-                except:
-                    print(padded_seqs.shape)
-                    print(seq.shape)
 
             return padded_seqs, lengths
 

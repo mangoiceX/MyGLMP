@@ -67,13 +67,13 @@ class ExternalKnowledge(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self.softmax = nn.Softmax(dim=1)
 
-    def add2memory(self, embed, rnn_output, conv_arr_lengths):  # 调试到这里
+    def add2memory(self, embed, kb_len, rnn_output, conv_arr_lengths):  # 调试到这里
         for bi in range(embed.size(0)):
-            start, end = 0, conv_arr_lengths[bi]
+            start, end = kb_len[bi], kb_len[bi] + conv_arr_lengths[bi]
             embed[bi, start:end, :] = embed[bi, start:end, :] + rnn_output[bi, :end, :]
         return embed
 
-    def load_memory(self, story, conv_arr_lengths, rnn_output, rnn_hidden):  #转载对话历史
+    def load_memory(self, story, conv_arr_lengths, kb_len, rnn_output, rnn_hidden):  #转载对话历史
         self.m_story = []
         query = rnn_hidden  # 语义转换 [batch_size, hidden_size]
         story_size = story.size()
@@ -84,7 +84,7 @@ class ExternalKnowledge(nn.Module):
             embedding_A = embedding_A.view(story_size + (embedding_A.size(-1),))  # b * m * s * e
             embedding_A = torch.sum(embedding_A, 2)  # 合并用来表示每个词的维度-4  [batch_size,story_length,hidden_size]
             if not args['ablationH']:
-                embedding_A = self.add2memory(embedding_A, rnn_output, conv_arr_lengths)
+                embedding_A = self.add2memory(embedding_A, kb_len,rnn_output, conv_arr_lengths)
             embedding_A = self.dropout_layer(embedding_A)  # 为什么要添加dropout
 
             query_tmp = query.unsqueeze(1).expand_as(embedding_A)  # 需要对第二个维度进行拓展
@@ -96,7 +96,7 @@ class ExternalKnowledge(nn.Module):
             embedding_C = embedding_C.view(story_size + (embedding_C.size(-1),))  # b * m * s * e
             embedding_C = torch.sum(embedding_C, 2)
             if not args['ablationH']:
-                embedding_C = self.add2memory(embedding_C, rnn_output, conv_arr_lengths)
+                embedding_C = self.add2memory(embedding_C, kb_len, rnn_output, conv_arr_lengths)
 
             prob_tmp = prob.unsqueeze(2).expand_as(embedding_C)
             o_k = torch.sum(embedding_C * prob_tmp, 1)  # 注意力分布和下一跳的存储内容相乘得到此时的输出 , 消除story_lenght

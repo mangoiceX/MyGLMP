@@ -132,7 +132,7 @@ class GLMP(nn.Module):
         # encoder_output [batch_size, story_length, hidden_size]  encoder_hidden [batch_size, hidden_size]
         encoder_output, encoder_hidden = self.encoder.forward(data['conv_arr'], data['conv_arr_lengths'])
         # ek_readout [batch_size, hidden_size] global_ptr [batch_size, story_length]
-        global_ptr, ek_readout = self.ext_know.load_memory(story, data['conv_arr_lengths'], encoder_output, encoder_hidden)  # ek_readout是q k+1
+        global_ptr, ek_readout = self.ext_know.load_memory(story, data['conv_arr_lengths'], data['kb_info_lengths'], encoder_output, encoder_hidden)  # ek_readout是q k+1
         sketch_init = torch.cat((encoder_hidden, ek_readout), dim=1)  # 连接hidden_size维度，然后通过一个全连接层降维
 
         # 通过四元组得到原始对话的单词列表
