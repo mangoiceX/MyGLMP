@@ -6,7 +6,7 @@ from utils.config import *
 import ast
 
 from utils.official_general  import *
-from utils.utils_temp import entityList, get_type_dict
+from utils.official_utils_temp import entityList, get_type_dict
 
 
 def read_langs(file_name, global_entity, type_dict, max_line=None):

@@ -27,14 +27,13 @@ def get_entity_list(type_dict):
     return entity_list
 
 
-def read_file(file_train, type_dict, entity_list):
+def read_file(file_path, type_dict, entity_list):
     context_arr, data = [], []
     max_resp_len = 0
-    with open(file_train, 'r') as f:
+    with open(file_path, 'r') as f:
         cnt_line = 1
-        for line in f.readlines():
-
-            line = line.strip()
+        for line in f:  # f.readlines()会将整个文件内容全部读入占用内存大
+            line = line.strip()  # 用这个将\n符号去除，才能用if line判断是否是只有换行，也就是另外一段对话开始
             if line:
                 turn_id, line = line.split(' ', 1)
                 if '\t' in line:
@@ -70,16 +69,17 @@ def read_file(file_train, type_dict, entity_list):
                         "local_ptr": local_ptr + [len(context_arr)],
                         'global_ptr': global_ptr,
                         'sketch_response': sketch_response,
-                        'ID': cnt_line
+                        'ID': cnt_line,
+                        'kb_info': []
                     }
                     data.append(data_details)
                     gen_r = generate_memory(response, '$r', turn_id)
                     context_arr += gen_r  # 将当前回答加入上下文
                     max_resp_len = max(max_resp_len, len(response.split()))  # 记录回答的最长长度
-                else:  # 表示这段话结束 #这里不知道是做什么
-                    response = line
-                    kb_info = generate_memory(response, "", turn_id)
-                    context_arr = kb_info + context_arr
+                # else:  # 表示这段话结束 #这里不知道是做什么
+                #     response = line
+                #     kb_info = generate_memory(response, "", turn_id)
+                #     context_arr = kb_info + context_arr
             else:
                 cnt_line += 1
                 context_arr = []
@@ -133,16 +133,16 @@ def prepare_data(task, batch_size):
     """
     data_path = '../data/dialog-bAbI-tasks'
     # 小数据集测试
-    # file_train = '{}/dialog-babi-task{}trn-small.txt'.format(data_path, task)
-    # file_dev = '{}/dialog-babi-task{}dev-small.txt'.format(data_path, task)
-    # file_tst = '{}/dialog-babi-task{}tst-small.txt'.format(data_path, task)
-    # file_tst_oov = '{}/dialog-babi-task{}tst-OOV-small.txt'.format(data_path, task)
+    file_train = '{}/dialog-babi-task{}trn-small.txt'.format(data_path, task)
+    file_dev = '{}/dialog-babi-task{}dev-small.txt'.format(data_path, task)
+    file_tst = '{}/dialog-babi-task{}tst-small.txt'.format(data_path, task)
+    file_tst_oov = '{}/dialog-babi-task{}tst-OOV-small.txt'.format(data_path, task)
 
     # 大数据集测试
-    file_train = '{}/dialog-babi-task{}trn.txt'.format(data_path, task)
-    file_dev = '{}/dialog-babi-task{}dev.txt'.format(data_path, task)
-    file_tst = '{}/dialog-babi-task{}tst.txt'.format(data_path, task)
-    file_tst_oov = '{}/dialog-babi-task{}tst-OOV.txt'.format(data_path, task)
+    # file_train = '{}/dialog-babi-task{}trn.txt'.format(data_path, task)
+    # file_dev = '{}/dialog-babi-task{}dev.txt'.format(data_path, task)
+    # file_tst = '{}/dialog-babi-task{}tst.txt'.format(data_path, task)
+    # file_tst_oov = '{}/dialog-babi-task{}tst-OOV.txt'.format(data_path, task)
 
     kb_path = '{}/dialog-babi-kb-all.txt'.format(data_path)
 

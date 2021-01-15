@@ -126,7 +126,7 @@ class GLMP(nn.Module):
         self.loss, self.loss_g, self.loss_v, self.loss_l, self.print_every = 0, 0, 0, 0, 1
 
     def encode_and_decode(self, data, max_target_length, evaluating=False):
-        # 暂时没有添加mask的带啊
+        # 暂时没有添加mask的代码
 
         story = data['context_arr']  # [8, 70, 4] 8是bsz, 70是一段对话的单词个数,4是每个词表示的维度
         # encoder_output [batch_size, story_length, hidden_size]  encoder_hidden [batch_size, hidden_size]

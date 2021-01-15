@@ -55,6 +55,9 @@ class Dataset(torch.utils.data.Dataset):
         sketch_response = self.data_seq[index]['sketch_response']
         sketch_response = self.change_word2id(sketch_response, False)
 
+        kb_info = self.data_seq[index]['kb_info']
+        kb_info = self.change_word2id(kb_info, True)
+
         data_info = {}
         for key in self.data_seq[0].keys():
             try:
