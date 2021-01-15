@@ -217,6 +217,7 @@ class GLMP(nn.Module):
                 # print(pred_sentence)
                 # print('Label sentence:')
                 # print(label_sentence)
+
                 if args['dataset'] == 'kvr':
                     # compute F1 SCORE
                     single_f1, count = self.compute_prf(data_item['ent_index'][bi], pred_sentence.split(), global_entity_list, data_item['kb_info_plain'][bi])
