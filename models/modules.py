@@ -109,8 +109,8 @@ class ExternalKnowledge(nn.Module):
 
             self.m_story.append(embedding_A)  # 保存第k个过程的矩阵
         self.m_story.append(embedding_C)  # 最后一跳的内容A没有保存，C才有
-        return self.sigmoid(prob_origin), query  # global pointer，和KB中读出来的值
-        # return self.sigmoid(prob_origin), o_k  # global pointer，和KB中读出来的值
+        # return self.sigmoid(prob_origin), query  # global pointer，和KB中读出来的值
+        return self.sigmoid(prob_origin), o_k  # global pointer，和KB中读出来的值
 
 
     def forward(self, rnn_hidden, global_ptr):

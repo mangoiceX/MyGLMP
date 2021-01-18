@@ -43,11 +43,15 @@ parser.add_argument('-gd', '--grad_threshold', help = 'Gradient Threshold', type
 parser.add_argument('-ep', '--eval_period', help = 'Evaluation period', type = int)
 parser.add_argument('-pt','--patience', help = 'Patience', type = int)
 parser.add_argument('-b','--batch_size', help='Batch_size', type = int)
-parser.add_argument('-abh', '--ablationH', type = bool, required = False, default = False)
-parser.add_argument('-abg', '--ablationG', type = bool, required = False, default = False)
+# parser.add_argument('-abh', '--ablationH', type = bool, required = False, default = False)
+parser.add_argument('-abh', '--ablationH', type = int, required = False, default = 0)
+# parser.add_argument('-abg', '--ablationG', type = bool, required = False, default = False)
+parser.add_argument('-abg', '--ablationG', type = int, required = False, default = 0)
+# argparse对添加bool处理特别，bool()函数对非空判断为True,所以为了避免繁琐直接使用int
 parser.add_argument('-rec','--record', help='use record function during inference', type=int, required=False, default=0)
 parser.add_argument('-tfr','--teacher_forcing_ratio', help='teacher_forcing_ratio', type=float, required=False, default=0.5)
 parser.add_argument('-gs', '--genSample', help='Generate Sample', required=False, default=0)
+parser.add_argument('-small_bool', '--use_small_dataset', help='use small dataset to debug', required=False, type=int, default=1)
 
 args = vars(parser.parse_args())
 

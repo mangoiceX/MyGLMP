@@ -132,17 +132,20 @@ def prepare_data(task, batch_size):
         batch_size ():
     """
     data_path = '../data/dialog-bAbI-tasks'
-    # 小数据集测试
-    file_train = '{}/dialog-babi-task{}trn-small.txt'.format(data_path, task)
-    file_dev = '{}/dialog-babi-task{}dev-small.txt'.format(data_path, task)
-    file_tst = '{}/dialog-babi-task{}tst-small.txt'.format(data_path, task)
-    file_tst_oov = '{}/dialog-babi-task{}tst-OOV-small.txt'.format(data_path, task)
-
-    # 大数据集测试
-    # file_train = '{}/dialog-babi-task{}trn.txt'.format(data_path, task)
-    # file_dev = '{}/dialog-babi-task{}dev.txt'.format(data_path, task)
-    # file_tst = '{}/dialog-babi-task{}tst.txt'.format(data_path, task)
-    # file_tst_oov = '{}/dialog-babi-task{}tst-OOV.txt'.format(data_path, task)
+    if args['use_small_dataset']:
+        # 小数据集测试
+        print("use small dataset to debug!")
+        file_train = '{}/dialog-babi-task{}trn-small.txt'.format(data_path, task)
+        file_dev = '{}/dialog-babi-task{}dev-small.txt'.format(data_path, task)
+        file_tst = '{}/dialog-babi-task{}tst-small.txt'.format(data_path, task)
+        file_tst_oov = '{}/dialog-babi-task{}tst-OOV-small.txt'.format(data_path, task)
+    else:
+        # 大数据集测试
+        print("use big dataset to debug!")
+        file_train = '{}/dialog-babi-task{}trn.txt'.format(data_path, task)
+        file_dev = '{}/dialog-babi-task{}dev.txt'.format(data_path, task)
+        file_tst = '{}/dialog-babi-task{}tst.txt'.format(data_path, task)
+        file_tst_oov = '{}/dialog-babi-task{}tst-OOV.txt'.format(data_path, task)
 
     kb_path = '{}/dialog-babi-kb-all.txt'.format(data_path)
 
