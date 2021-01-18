@@ -112,6 +112,7 @@ class ExternalKnowledge(nn.Module):
         return self.sigmoid(prob_origin), query  # global pointer，和KB中读出来的值
         # 为什么返回query而不是o_k，难道与残差学习或增量学习有关？难道不应该是最后一个o_k输出才是注意力最后的输出
         # return self.sigmoid(prob_origin), o_k  # global pointer，和KB中读出来的值，经过测试将原来返回query改为返回o_k没大区别
+        # self.sigmoid(prob_origin)使用sigmoid转化为类似硬注意力的，转化为非0，即1，这是在整段文本上操作的
 
 
     def forward(self, rnn_hidden, global_ptr):
@@ -142,7 +143,7 @@ class ExternalKnowledge(nn.Module):
             o_k = torch.sum(m_C * prob_tmp, 1)  # 消除story_length维度
             query = query + o_k
 
-        return prob_origin, prob_soft  # 注意力分布 输出分布
+        return prob_origin, prob_soft  # 使用点积模型的注意力打分函数学习local ptr，注意力分布
 
 
 class LocalMemory(nn.Module):
@@ -174,19 +175,23 @@ class LocalMemory(nn.Module):
             sketch_response = self.dropout_layer(self.C(decoder_input))  #[8] -> [1,8,128] .
             if len(sketch_response.size()) == 1:  # batch_size==1的时候会出现维度只有一位的情况
                 sketch_response = sketch_response.unsqueeze(0)
-            # 这里的seq_len为什么是1？
+            # 这里的seq_len为什么设置1？
             _, hidden = self.sketch_rnn(sketch_response.unsqueeze(0), hidden_init)  # [seq_len, batch_size, embedding_dim]
             query = hidden[0]  # [num_layers * num_directions, batch, embedding_dim]  我认为结果包含了各层的隐含态
             # p_vocab [batch_size, vocab_size]
             # 论文对p_vocab进行了softmax操作，但是实际代码注释了，因为会使得效果变得比较差
+            '''
+            C 的维度是[词汇表长度, embedding_dim],  从词向量矩阵中计算注意力得分（未归一化）,
+            因为embed_layer包含了词汇表所有的词汇的表示，而文本经过embed_layer得到的就是与文本长度有关的嵌入矩阵
+            '''
             p_vocab = hidden.squeeze(0).matmul(self.C.weight.transpose(1, 0))  # 这里添加softmax层导致效果变差
             # p_vocab = self.attend_vocab(self.C.weight, hidden.squeeze(0))
             # p_vocab [vocab_size, embedding_dim]
             all_decoder_output_vocab[t] = p_vocab
-            _, top_p_vocab = p_vocab.data.topk(1)  # 获得上下文关注的词汇的序号，这是针对词汇表
+            _, top_p_vocab = p_vocab.data.topk(1)  #
 
             # 使用sketch rnn的最后隐含态查询EK得到注意力分布，也就是local pointer
-            local_ptr, prob_soft = ext_know(query, global_ptr)  # 如果不适用forward也可以达到同样效果吗
+            local_ptr, prob_soft = ext_know(query, global_ptr)  # 针对整个文本计算注意力分布，然后从中抄词
             all_decoder_output_ptr[t] = local_ptr
 
             if use_teacher_forcing:   # 使用了标签数据进行初始化，算不算数据泄露？

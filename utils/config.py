@@ -51,6 +51,7 @@ parser.add_argument('-abg', '--ablationG', type = int, required = False, default
 parser.add_argument('-rec','--record', help='use record function during inference', type=int, required=False, default=0)
 parser.add_argument('-tfr','--teacher_forcing_ratio', help='teacher_forcing_ratio', type=float, required=False, default=0.5)
 parser.add_argument('-gs', '--genSample', help='Generate Sample', required=False, default=0)
+# 最好在变量名后添加bool表示是bool值
 parser.add_argument('-small_bool', '--use_small_dataset', help='use small dataset to debug', required=False, type=int, default=1)
 
 args = vars(parser.parse_args())
