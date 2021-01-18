@@ -30,12 +30,14 @@ class ContextRNN(nn.Module):
         self.W = nn.Linear(2*self.hidden_size, self.hidden_size)
 
     def forward(self, input_seqs, input_lengths):  # input_lengths是该batch中，每个故事的长度
-        #embeddings = self.embedding(input_seqs)   # [batch_size, story_length, MEM_TOKEN_SIZE, hidden_size]
+        # 感觉不将维度压缩更符合推测，因为需要相邻元素需要计算相似度，如果将MEM_TOKEN_SIZE压缩进去反而会导致词的语义被分割
+        embeddings = self.embedding(input_seqs)   # [batch_size, story_length, MEM_TOKEN_SIZE, hidden_size]
         # 保持batch_size维度不变，另外两个维度合并，然后在embedding
-        embeddings = self.embedding(input_seqs.contiguous().view(input_seqs.size(0), -1).long())
-        embeddings = embeddings.view(input_seqs.size() + (embeddings.size(-1),))
+        # embeddings = self.embedding(input_seqs.contiguous().view(input_seqs.size(0), -1).long())
+        # embeddings = embeddings.view(input_seqs.size() + (embeddings.size(-1),))  # 添加一个维度
         embeddings = torch.sum(embeddings, 2)  # [batch_size, story_length, hidden_size]
         embeddings = self.dropout_layer(embeddings)  # 为什么要使用dropout
+        # 随机丢弃一些embedding的特征（embedding的每一维就是一个特征），防止过拟合
 
         hidden_init = _cuda(torch.zeros(2*self.n_layers, input_seqs.size(0), self.hidden_size))  # [2, batch_size, hidden_size]隐含状态的初始值
         if input_lengths:
@@ -79,19 +81,21 @@ class ExternalKnowledge(nn.Module):
         story_size = story.size()
 
         for hop in range(self.max_hops):
+            # 输入经过embedding_A得到输入记忆模块， 输入经过经过embedding_C得到输出记忆模块
             # embedding_A = self.C[hop](story)
             embedding_A = self.C[hop](story.contiguous().view(story_size[0], -1))  # 要转化为[batch_size, story_length*4]这样之后为什么会效果好些，是embed算法要求这样做的吗
             embedding_A = embedding_A.view(story_size + (embedding_A.size(-1),))  # b * m * s * e
             embedding_A = torch.sum(embedding_A, 2)  # 合并用来表示每个词的维度-4  [batch_size,story_length,hidden_size]
             if not args['ablationH']:
-                embedding_A = self.add2memory(embedding_A, kb_len,rnn_output, conv_arr_lengths)
+                embedding_A = self.add2memory(embedding_A, kb_len, rnn_output, conv_arr_lengths)  # 在embedding_A中添加rnn_output
             embedding_A = self.dropout_layer(embedding_A)  # 为什么要添加dropout
 
             query_tmp = query.unsqueeze(1).expand_as(embedding_A)  # 需要对第二个维度进行拓展
             prob_origin = torch.sum(embedding_A*query_tmp, 2)  # 查询向量和内存中的内容相乘计算出注意力分布
-            prob = self.softmax(prob_origin)  #[batch_size, story_length]
+            # 注意力模型需要添加softmax得到注意力打分
+            prob = self.softmax(prob_origin)  # [batch_size, story_length]
 
-            #embedding_C = self.C[hop+1](story)
+            # embedding_C = self.C[hop+1](story)
             embedding_C = self.C[hop+1](story.contiguous().view(story_size[0], -1))
             embedding_C = embedding_C.view(story_size + (embedding_C.size(-1),))  # b * m * s * e
             embedding_C = torch.sum(embedding_C, 2)
@@ -99,12 +103,15 @@ class ExternalKnowledge(nn.Module):
                 embedding_C = self.add2memory(embedding_C, kb_len, rnn_output, conv_arr_lengths)
 
             prob_tmp = prob.unsqueeze(2).expand_as(embedding_C)
+            # 属于注意力机制的点击模型， 用注意力分布和输出模块相乘得到输出
             o_k = torch.sum(embedding_C * prob_tmp, 1)  # 注意力分布和下一跳的存储内容相乘得到此时的输出 , 消除story_lenght
-            query = query + o_k  # 第k+1层的输入等于第k层的输入与输出相加
+            query = query + o_k  # 第k+1层的输入等于第k层的输入与输出相加， 端到端记忆网络的设计
 
             self.m_story.append(embedding_A)  # 保存第k个过程的矩阵
         self.m_story.append(embedding_C)  # 最后一跳的内容A没有保存，C才有
         return self.sigmoid(prob_origin), query  # global pointer，和KB中读出来的值
+        # return self.sigmoid(prob_origin), o_k  # global pointer，和KB中读出来的值
+
 
     def forward(self, rnn_hidden, global_ptr):
         '''

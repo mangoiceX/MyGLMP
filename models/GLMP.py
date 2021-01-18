@@ -275,8 +275,8 @@ class GLMP(nn.Module):
                 print('MODEL SAVED')
                 return acc_score
 
-
     def compute_prf(self, gold, pred, global_entity_list, kb_plain):
+        # 计算confusion matrix
         local_kb_word = [k[0] for k in kb_plain]
         TP, FP, FN = 0, 0, 0
         if len(gold)!= 0:
@@ -296,7 +296,6 @@ class GLMP(nn.Module):
         else:
             precision, recall, F1, count = 0, 0, 0, 0
         return F1, count
-
 
     def print_loss(self):
         print_loss_avg = self.loss / self.print_every

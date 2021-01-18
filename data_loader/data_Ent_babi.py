@@ -59,7 +59,7 @@ def read_file(file_path, type_dict, entity_list):
                             local_ptr.append(len(context_arr))
                     # 计算全局指针，统计上下文有没有在当前回答中出现
                     global_ptr = [1 if triplet[0] in response.split() else 0 for triplet in context_arr] +  [
-                        1]  # 最后为什么要+1
+                        1]  # 添加结束符
                     sketch_response = generate_sketch_response(response, entity_list, type_dict)
 
                     data_details = {
