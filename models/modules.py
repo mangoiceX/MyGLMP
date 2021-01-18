@@ -109,8 +109,9 @@ class ExternalKnowledge(nn.Module):
 
             self.m_story.append(embedding_A)  # 保存第k个过程的矩阵
         self.m_story.append(embedding_C)  # 最后一跳的内容A没有保存，C才有
-        # return self.sigmoid(prob_origin), query  # global pointer，和KB中读出来的值
-        return self.sigmoid(prob_origin), o_k  # global pointer，和KB中读出来的值
+        return self.sigmoid(prob_origin), query  # global pointer，和KB中读出来的值
+        # 为什么返回query而不是o_k，难道与残差学习或增量学习有关？难道不应该是最后一个o_k输出才是注意力最后的输出
+        # return self.sigmoid(prob_origin), o_k  # global pointer，和KB中读出来的值，经过测试将原来返回query改为返回o_k没大区别
 
 
     def forward(self, rnn_hidden, global_ptr):
