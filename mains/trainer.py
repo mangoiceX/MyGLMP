@@ -48,8 +48,15 @@ for epoch in range(args['epochs']):
         if cnt > args['patience']:
             print("Ran out of patient, early stop...")
             break
-        if math.fabs(metrics_best - 1.0) < 0.001:
+        if math.fabs(metrics_best - 1.0) < 0.00001:
             print('Results are so good, early stop...')
             break
 
+acc_test = model.evaluate(tst_loader,1e7)
+print("TEST ACC SCORE:\t{}".format(acc_test))
 
+if not tst_oov_loader:
+    acc_oov_test = model.evaluate(tst_oov_loader, 1e7)
+    print('OOV TEST ACC SCORE:\t{}'.format(acc_oov_test))
+else:
+    print("NO OOV TEST")

@@ -247,7 +247,7 @@ class GLMP(nn.Module):
         self.decoder.train(True)
 
         acc_score = acc / float(total)
-        print('ACC SCORE:\t{}'.format(acc_score))
+        print('TRAIN ACC SCORE:\t{}'.format(acc_score))
         bleu_score = moses_multi_bleu(np.array(pred), np.array(label), lowercase=True)  # 暂时无法使用
 
         if args['dataset'] == 'kvr':
